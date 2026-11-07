@@ -1,0 +1,10 @@
+{
+  "name": "tribecca",
+  "version": "0.1.0",
+  "description": "TriBecca — Scacchi Tricolore 3D a 3 Giocatori (96 caselle, Rosetta centrale, Raggi illuminati 2D/3D, PuffinLogin)",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,229 @@
+/**
+ * @fileoverview PlayerSeatManager — Owns the mapping between the 3 board armies
+ * (`white`, `red`, `green`) and PuffinLogin family profiles (`riccardo`, `ale`, `seby`,
+ * `kate`, `lucilla`, `guest`) or `cpu` (Computer), plus Auto-Play (`0v3` / `1v2` / `2v1`) timing.
+ */
+
+import { PLAYER_COLORS } from './BoardTopologyManager.js';
+
+export const PUFFIN_SEAT_PROFILES = {
+  riccardo: {
+    id: 'riccardo',
+    kind: 'human',
+    displayName: 'Papino Riccardo',
+    shortName: 'Papino 🦖',
+    avatar: 'assets/avatars/riccardo.png',
+    badgeColor: '#FACC15',
+  },
+  ale: {
+    id: 'ale',
+    kind: 'human',
+    displayName: 'Ale',
+    shortName: 'Ale 🐉',
+    avatar: 'assets/avatars/ale.png',
+    badgeColor: '#EF4444',
+  },
+  seby: {
+    id: 'seby',
+    kind: 'human',
+    displayName: 'Seby',
+    shortName: 'Seby 🐴',
+    avatar: 'assets/avatars/seby.png',
+    badgeColor: '#3B82F6',
+  },
+  kate: {
+    id: 'kate',
+    kind: 'human',
+    displayName: 'Mamma Kate',
+    shortName: 'Kate 👸',
+    avatar: 'assets/avatars/kate.png',
+    badgeColor: '#A855F7',
+  },
+  lucilla: {
+    id: 'lucilla',
+    kind: 'human',
+    displayName: 'Nonna Lucilla',
+    shortName: 'Nonna 👵',
+    avatar: 'assets/avatars/lucilla.png',
+    badgeColor: '#EC4899',
+  },
+  guest: {
+    id: 'guest',
+    kind: 'human',
+    displayName: 'Ospite',
+    shortName: 'Ospite 🐧',
+    avatar: 'assets/avatars/guest.png',
+    badgeColor: '#9CA3AF',
+  },
+  cpu: {
+    id: 'cpu',
+    kind: 'cpu',
+    displayName: 'Computer',
+    shortName: 'Computer 🤖',
+    avatar: 'assets/avatars/guest.png',
+    badgeColor: '#10B981',
+  },
+};
+
+export class PlayerSeatManager {
+  /**
+   * @param {import('./ThreeChessRulesManager.js').ThreeChessRulesManager} rules
+   * @param {import('../core/GameEventBus.js').GameEventBus} [bus]
+   */
+  constructor(rules, bus = null) {
+    this.rules = rules;
+    this.bus = bus;
+
+    /** @type {Record<string, {profileId: string, kind: 'human' | 'cpu', displayName: string, shortName: string, avatar: string}>} */
+    this.seats = {
+      white: { ...PUFFIN_SEAT_PROFILES.riccardo, profileId: 'riccardo' },
+      red: { ...PUFFIN_SEAT_PROFILES.cpu, profileId: 'cpu' },
+      green: { ...PUFFIN_SEAT_PROFILES.cpu, profileId: 'cpu' },
+    };
+
+    this.autoPlayPaused = false;
+    this.aiDelayMs = 950;
+    this.previewAiRays = true;
+    this._timerId = null;
+  }
+
+  init(ctx) {
+    this.ctx = ctx;
+    if (!this.bus && ctx?.bus) {
+      this.bus = ctx.bus;
+    }
+
+    this.bus?.on('TURN_CHANGED', () => this._scheduleAiIfNeeded());
+    this.bus?.on('GAME_RESET', () => this._scheduleAiIfNeeded());
+    this.bus?.on('HISTORY_CHANGED', () => this._scheduleAiIfNeeded());
+  }
+
+  update() {}
+  lateUpdate() {}
+
+  dispose() {
+    this._clearTimer();
+  }
+
+  _clearTimer() {
+    if (this._timerId) {
+      clearTimeout(this._timerId);
+      this._timerId = null;
+    }
+  }
+
+  getSeat(color) {
+    return this.seats[color];
+  }
+
+  isHumanTurn() {
+    const active = this.rules.getActiveColor();
+    return this.seats[active]?.kind === 'human';
+  }
+
+  getHumanCount() {
+    return PLAYER_COLORS.filter((c) => this.seats[c]?.kind === 'human').length;
+  }
+
+  /**
+   * Assigns a PuffinLogin profile (`riccardo`, `ale`, `seby`, `kate`, `lucilla`, `guest`) or `cpu`
+   * to a board color (`white`, `red`, `green`).
+   */
+  setSeatProfile(color, profileId) {
+    const meta = PUFFIN_SEAT_PROFILES[profileId] || PUFFIN_SEAT_PROFILES.guest;
+    this.seats[color] = {
+      ...meta,
+      profileId: meta.id,
+    };
+    this.bus?.emit({
+      type: 'SEAT_CONFIG_CHANGED',
+      seats: { ...this.seats },
+    });
+    this._scheduleAiIfNeeded();
+  }
+
+  /**
+   * Quick combo presets:
+   * - `1v2`: White = logged-in human (or Papino), Red = CPU, Green = CPU
+   * - `2v1`: White = Ale, Red = Seby, Green = CPU
+   * - `3v0`: White = Papino, Red = Ale, Green = Seby
+   * - `0v3`: All 3 = CPU (Il Gioco Gioca da Solo!)
+   */
+  applyPreset(presetId, loggedInUserId = 'riccardo') {
+    const primaryHuman = PUFFIN_SEAT_PROFILES[loggedInUserId] ? loggedInUserId : 'riccardo';
+    if (presetId === '1v2') {
+      this.setSeatProfile('white', primaryHuman);
+      this.setSeatProfile('red', 'cpu');
+      this.setSeatProfile('green', 'cpu');
+      this.autoPlayPaused = false;
+    } else if (presetId === '2v1') {
+      this.setSeatProfile('white', primaryHuman === 'ale' ? 'seby' : primaryHuman);
+      this.setSeatProfile('red', 'ale');
+      this.setSeatProfile('green', 'cpu');
+      this.autoPlayPaused = false;
+    } else if (presetId === '3v0') {
+      this.setSeatProfile('white', 'riccardo');
+      this.setSeatProfile('red', 'ale');
+      this.setSeatProfile('green', 'seby');
+      this.autoPlayPaused = false;
+    } else if (presetId === '0v3') {
+      this.setSeatProfile('white', 'cpu');
+      this.setSeatProfile('red', 'cpu');
+      this.setSeatProfile('green', 'cpu');
+      this.autoPlayPaused = false;
+    }
+    this._scheduleAiIfNeeded();
+  }
+
+  setAutoPlayPaused(paused) {
+    this.autoPlayPaused = Boolean(paused);
+    this.bus?.emit({
+      type: 'AUTOPLAY_TOGGLED',
+      paused: this.autoPlayPaused,
+    });
+    if (this.autoPlayPaused) {
+      this._clearTimer();
+    } else {
+      this._scheduleAiIfNeeded();
+    }
+  }
+
+  setAiSpeedMs(ms) {
+    this.aiDelayMs = Math.max(120, Number(ms) || 950);
+  }
+
+  /**
+   * Triggers a single AI move immediately (even when paused in Step mode).
+   */
+  stepSingleAiTurn() {
+    this._clearTimer();
+    const active = this.rules.getActiveColor();
+    if (!this.rules.isGameOver && !this.rules.editorMode && this.seats[active]?.kind === 'cpu') {
+      this.bus?.emit({
+        type: 'AI_TURN_REQUESTED',
+        color: active,
+        previewRaysMs: this.previewAiRays ? Math.min(420, Math.floor(this.aiDelayMs * 0.45)) : 0,
+      });
+    }
+  }
+
+  _scheduleAiIfNeeded() {
+    this._clearTimer();
+    if (this.rules.isGameOver || this.rules.editorMode || this.autoPlayPaused) return;
+    const active = this.rules.getActiveColor();
+    if (this.seats[active]?.kind !== 'cpu') return;
+
+    this._timerId = setTimeout(() => {
+      this._timerId = null;
+      if (this.rules.isGameOver || this.rules.editorMode || this.autoPlayPaused) return;
+      const currentActive = this.rules.getActiveColor();
+      if (this.seats[currentActive]?.kind === 'cpu') {
+        this.bus?.emit({
+          type: 'AI_TURN_REQUESTED',
+          color: currentActive,
+          previewRaysMs: this.previewAiRays ? Math.min(420, Math.floor(this.aiDelayMs * 0.45)) : 0,
+        });
+      }
+    }, this.aiDelayMs);
+  }
+}

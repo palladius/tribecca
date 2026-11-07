@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🇮🇹 TriBecca — Scacchi Tricolore 3D a 3 Giocatori</title>
+  <style>
+    :root {
+      --bg-dark: #090f1d;
+      --panel-bg: rgba(15, 23, 42, 0.92);
+      --border-subtle: rgba(148, 163, 184, 0.22);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-gold: #facc15;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Header */
+    .hud-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      z-index: 20;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1.5px solid var(--accent-gold);
+    }
+    .brand-title {
+      font-size: 1.08rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+    .brand-subtitle {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .turn-pill {
+      padding: 6px 14px;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      border-radius: 999px;
+      font-size: 0.9rem;
+    }
+    .check-badge {
+      margin-left: 6px;
+      padding: 2px 7px;
+      background: #dc2626;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .topbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    button, select {
+      background: #1e293b;
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover, select:hover {
+      border-color: var(--accent-gold);
+      background: #334155;
+    }
+    button.active {
+      background: var(--accent-gold);
+      color: #0f172a;
+      border-color: var(--accent-gold);
+      font-weight: 800;
+    }
+
+    /* Second Strip: 3 Puffin Seats + Presets + Rules */
+    .seats-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(15, 23, 42, 0.78);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      z-index: 15;
+    }
+    .seats-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .seat-card {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 8px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1.5px solid transparent;
+      font-size: 0.78rem;
+    }
+    .seat-card.active-turn {
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+    }
+    .seat-card.eliminated {
+      opacity: 0.42;
+      text-decoration: line-through;
+    }
+    .seat-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    /* Main Stage (3D / 2D / Split) */
+    #game-stage {
+      flex: 1;
+      display: grid;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #game-stage[data-view-mode="split"] {
+      grid-template-columns: 1.15fr 0.85fr;
+    }
+    #game-stage[data-view-mode="3d"] {
+      grid-template-columns: 1fr;
+    }
+    #game-stage[data-view-mode="3d"] #board-2d-panel {
+      display: none;
+    }
+    #game-stage[data-view-mode="2d"] {
+      grid-template-columns: 1fr;
+    }
+    #game-stage[data-view-mode="2d"] #board-3d-panel {
+      display: none;
+    }
+
+    .board-panel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #board-2d-panel {
+      border-left: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at center, #0f172a 0%, #060b16 100%);
+      padding: 8px;
+    }
+    #board-3d-container, #board-2d-container {
+      width: 100%;
+      height: 100%;
+    }
+    .panel-tag {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      padding: 3px 8px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Bottom Ray Inspector & Action Dock */
+    .hud-bottombar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--panel-bg);
+      border-top: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      z-index: 20;
+    }
+    #ray-inspector-banner {
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      flex: 1;
+      min-width: 240px;
+    }
+    #ray-inspector-banner code {
+      background: rgba(250, 204, 21, 0.18);
+      color: #fde047;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* Hall of Fame Overlay (revealed only at Game Over) */
+    #hof-section {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 15, 29, 0.88);
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #hof-section[hidden] {
+      display: none !important;
+    }
+    .hof-card {
+      background: #0f172a;
+      border: 1.5px solid var(--accent-gold);
+      border-radius: 14px;
+      padding: 18px;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    @media (max-width: 860px) {
+      #game-stage[data-view-mode="split"] {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+      #board-2d-panel {
+        border-left: none;
+        border-top: 1px solid var(--border-subtle);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 1. Top Header with Brand, Turn Indicator, View Switcher, 120° Controls & PuffinLogin -->
+  <header class="hud-topbar">
+    <div class="brand-group">
+      <img src="docs/logo/logo.png" alt="TriBecca Logo" class="brand-logo" />
+      <div>
+        <div class="brand-title">🇮🇹 TriBecca · Scacchi Tricolore 3D</div>
+        <div class="brand-subtitle">Bianco · Rosso · Verde (96 Caselle · Rosetta Centrale · Rotazione 120°)</div>
+      </div>
+    </div>
+
+    <div id="active-turn-banner" class="turn-pill">⚪ Turno: <strong>Bianco</strong></div>
+
+    <div class="topbar-controls">
+      <button data-view-btn="split" class="active" title="Mostra 3D e 2D affiancati">🌓 3D + 2D</button>
+      <button data-view-btn="3d" title="Solo vista 3D">🎲 Solo 3D</button>
+      <button data-view-btn="2d" title="Solo schema 2D">📐 Solo 2D</button>
+
+      <button id="btn-theme-toggle" title="Cambia tra Tricolore Italiano e Legno Pirografato">🇮🇹 Tema: Tricolore</button>
+
+      <select id="select-rotation-mode" title="Rotazione automatica di 120° a ogni turno">
+        <option value="every_turn">🔄 120°: Ogni Mossa</option>
+        <option value="humans_only">👤 120°: Solo Umani</option>
+        <option value="fixed">📌 Camera Fissa</option>
+      </select>
+
+      <button data-cam-angle="0" title="Inquadra Bianco (0°)">⚪ 0°</button>
+      <button data-cam-angle="120" title="Inquadra Rosso (120°)">🔴 120°</button>
+      <button data-cam-angle="240" title="Inquadra Verde/Nero (240°)">🟢 240°</button>
+
+      <puffin-login id="puffin-widget" app-id="tricolore-chess-3d"></puffin-login>
+    </div>
+  </header>
+
+  <!-- 2. Second Bar: 3 Puffin Seats (Bianco, Rosso, Verde) + Quick Combos + Elimination Rules -->
+  <section class="seats-bar">
+    <div class="seats-group">
+      <!-- Seat White (0°) -->
+      <div id="seat-card-white" class="seat-card active-turn">
+        <span>⚪ Bianco:</span>
+        <img id="seat-avatar-white" src="assets/avatars/riccardo.png" alt="Bianco" class="seat-avatar" />
+        <select id="seat-select-white">
+          <option value="riccardo">🦖 Papino Riccardo</option>
+          <option value="ale">🐉 Ale</option>
+          <option value="seby">🐴 Seby</option>
+          <option value="kate">👸 Mamma Kate</option>
+          <option value="lucilla">👵 Nonna Lucilla</option>
+          <option value="guest">🐧 Ospite</option>
+          <option value="cpu">🤖 Computer</option>
+        </select>
+      </div>
+
+      <!-- Seat Red (120°) -->
+      <div id="seat-card-red" class="seat-card">
+        <span>🔴 Rosso:</span>
+        <img id="seat-avatar-red" src="assets/avatars/guest.png" alt="Rosso" class="seat-avatar" />
+        <select id="seat-select-red">
+          <option value="cpu">🤖 Computer</option>
+          <option value="ale">🐉 Ale</option>
+          <option value="seby">🐴 Seby</option>
+          <option value="riccardo">🦖 Papino Riccardo</option>
+          <option value="kate">👸 Mamma Kate</option>
+          <option value="lucilla">👵 Nonna Lucilla</option>
+          <option value="guest">🐧 Ospite</option>
+        </select>
+      </div>
+
+      <!-- Seat Green (240°) -->
+      <div id="seat-card-green" class="seat-card">
+        <span>🟢 Verde:</span>
+        <img id="seat-avatar-green" src="assets/avatars/guest.png" alt="Verde" class="seat-avatar" />
+        <select id="seat-select-green">
+          <option value="cpu">🤖 Computer</option>
+          <option value="seby">🐴 Seby</option>
+          <option value="ale">🐉 Ale</option>
+          <option value="riccardo">🦖 Papino Riccardo</option>
+          <option value="kate">👸 Mamma Kate</option>
+          <option value="lucilla">👵 Nonna Lucilla</option>
+          <option value="guest">🐧 Ospite</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Quick Combos & Elimination Rule Preset -->
+    <div class="seats-group">
+      <button data-preset-btn="1v2" title="1 Umano contro 2 Computer">👤 1 vs 2 🤖</button>
+      <button data-preset-btn="2v1" title="2 Umani (es. Ale + Seby) contro 1 Computer">👥 2 vs 1 🤖</button>
+      <button data-preset-btn="3v0" title="3 Umani al Tavolo (Papino, Ale, Seby)">👨‍👦‍👦 3 Umani</button>
+      <button data-preset-btn="0v3" title="3 Computer: il gioco gioca da solo!">🍿 Gioca da Solo (3 🤖)</button>
+
+      <button id="btn-autoplay-toggle" title="Metti in pausa o avvia il Computer">⏸️ Pausa CPU</button>
+      <button id="btn-step-ai" title="Fai fare 1 singola mossa al Computer">⏭️ 1 Mossa CPU</button>
+
+      <select id="select-ai-speed" title="Velocità mosse Computer">
+        <option value="1500">🐢 CPU Lenta (1.5s)</option>
+        <option value="950" selected>🚶 CPU Normale (1s)</option>
+        <option value="450">⚡ CPU Veloce (0.45s)</option>
+        <option value="160">🚀 CPU Turbo (0.16s)</option>
+      </select>
+
+      <select id="select-elimination-mode" title="Cosa succede quando un Re subisce Scacco Matto (dal Google Doc di Riccardo)">
+        <option value="destroy" selected>💥 Regola Matto: Distruzione (Default)</option>
+        <option value="protoss_conquer">🔮 Regola Matto: Assimilazione (Protoss Conquer)</option>
+        <option value="flotsam_obstacles">🪵 Regola Matto: Relitti Inerti (Flotsam)</option>
+        <option value="sudden_death">⚡ Regola Matto: Morte Improvvisa (1° Matto Vince)</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- 3. Dual 3D + 2D Interactive Stage -->
+  <main id="game-stage" data-view-mode="split">
+    <div id="board-3d-panel" class="board-panel">
+      <div class="panel-tag">🎲 Vista 3D (Ruota di 120° a ogni mossa · Trascina per orbitare)</div>
+      <div id="board-3d-container"></div>
+    </div>
+    <div id="board-2d-panel" class="board-panel">
+      <div class="panel-tag">📐 Schema Geometrico 2D (96 Caselle A..L × 1..12 · Raggi della Rosetta)</div>
+      <div id="board-2d-container"></div>
+    </div>
+  </main>
+
+  <!-- 4. Bottom Ray Inspector & Action Dock -->
+  <footer class="hud-bottombar">
+    <div id="ray-inspector-banner">
+      👆 <strong>Clicca su qualsiasi pezzo</strong> (anche avversario!) per illuminare tutti i raggi e le mosse che si dipartono attraverso la Rosetta centrale.
+    </div>
+    <div class="dock-actions">
+      <span id="move-history-pill" style="font-size:0.78rem;color:#94a3b8;margin-right:6px;">Pronti a muovere</span>
+      <button id="btn-undo" title="Annulla ultima mossa">⏮️ Undo</button>
+      <button id="btn-redo" title="Ripeti mossa">⏭️ Redo</button>
+      <button id="btn-hint" title="Illumina il pezzo e la mossa consigliata">💡 Consiglio</button>
+      <button id="btn-editor-mode" title="Muovi liberamente i pezzi per copiare la scacchiera vera sul tavolo">🛠️ Specchio Scacchiera Vera</button>
+      <button id="btn-new-game" title="Ricomincia la partita da capo">🔄 Nuova Partita</button>
+    </div>
+  </footer>
+
+  <!-- 5. Hall of Fame Modal (Hidden during gameplay, revealed ONLY at Game Over!) -->
+  <section id="hof-section" hidden>
+    <div class="hof-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2>🏆 Hall of Fame — TriBecca</h2>
+        <button onclick="document.getElementById('hof-section').hidden = true">✖️ Chiudi</button>
+      </div>
+      <puffin-leaderboard id="game-lb" filter-game="tricolore-chess-3d"></puffin-leaderboard>
+    </div>
+  </section>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
