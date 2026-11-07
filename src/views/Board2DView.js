@@ -120,6 +120,12 @@ export class Board2DView {
       }
       this.render();
     });
+    this.bus.on('PLAYER_ELIMINATED', () => {
+      this.render();
+    });
+    this.bus.on('GAME_OVER', () => {
+      this.render();
+    });
   }
 
   setTheme(theme) {

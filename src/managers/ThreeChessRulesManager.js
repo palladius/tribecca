@@ -571,17 +571,42 @@ export class ThreeChessRulesManager {
 
   /**
    * Returns all enemy pieces currently attacking `targetSquareId` (excluding Flotsam pieces [03:30]).
+   * Handles both occupied and empty target squares accurately (e.g. for castling transit checks).
    */
   getAttackersOf(targetSquareId, defenderColor) {
     const attackers = [];
-    for (const [sq, p] of [...this.board.entries()]) {
-      if (p.color === defenderColor || p.isFlotsam) continue;
-      if (this.eliminatedColors.has(p.color)) continue;
-      const { moves } = this.getPseudoLegalMovesAndRays(sq);
-      for (const m of moves) {
-        if (m.to === targetSquareId) {
-          attackers.push({ from: sq, piece: p, path: m.path });
+    const hadPiece = this.board.has(targetSquareId);
+    const savedTarget = this.board.get(targetSquareId);
+
+    if (!hadPiece) {
+      this.board.set(targetSquareId, {
+        type: 'p',
+        color: defenderColor,
+        originalColor: defenderColor,
+        homeSector: 0,
+        moved: true,
+        isFlotsam: false,
+      });
+    }
+
+    try {
+      for (const [sq, p] of [...this.board.entries()]) {
+        if (sq === targetSquareId) continue;
+        if (p.color === defenderColor || p.isFlotsam) continue;
+        if (this.eliminatedColors.has(p.color)) continue;
+        const { moves } = this.getPseudoLegalMovesAndRays(sq);
+        for (const m of moves) {
+          if (m.rayKind === 'pawn' || m.rayKind === 'castle') continue;
+          if (m.to === targetSquareId) {
+            attackers.push({ from: sq, piece: p, path: m.path });
+          }
         }
+      }
+    } finally {
+      if (!hadPiece) {
+        this.board.delete(targetSquareId);
+      } else {
+        this.board.set(targetSquareId, savedTarget);
       }
     }
     return attackers;
@@ -615,6 +640,16 @@ export class ThreeChessRulesManager {
     const legalTargetSet = new Set();
 
     for (const m of pseudo.moves) {
+      // Castling cannot start in check or pass through an attacked transit square
+      if (m.rayKind === 'castle') {
+        if (
+          this.isKingInCheck(piece.color) ||
+          (m.castleRookTo && this.getAttackersOf(m.castleRookTo, piece.color).length > 0)
+        ) {
+          continue;
+        }
+      }
+
       const savedFrom = this.board.get(m.from);
       const savedTo = this.board.get(m.to);
       let savedRook = null;
@@ -812,24 +847,54 @@ export class ThreeChessRulesManager {
    * and applies the active elimination rule (`destroy`, `protoss_conquer`, `flotsam_obstacles`, `sudden_death`).
    */
   _advanceTurnAndCheckEliminations(attackerColor) {
-    // Check if any surviving opponent was just checkmated (or captured their King)
-    for (const color of this.turnOrder) {
-      if (color === attackerColor || this.eliminatedColors.has(color)) continue;
-      const kingSq = this.findKingSquare(color);
-      const legalMoves = this.getAllLegalMovesForColor(color);
-      const inCheck = this.isKingInCheck(color);
+    // 1. Check if any surviving opponent was just checkmated (including cascade eliminations in protoss_conquer/destroy)
+    let eliminatedSomeone = true;
+    while (eliminatedSomeone && !this.isGameOver) {
+      eliminatedSomeone = false;
+      for (const color of this.turnOrder) {
+        if (color === attackerColor || this.eliminatedColors.has(color)) continue;
+        const kingSq = this.findKingSquare(color);
+        const legalMoves = this.getAllLegalMovesForColor(color);
+        const inCheck = this.isKingInCheck(color);
 
-      if (inCheck && legalMoves.length > 0) {
-        this.bus?.emit({ type: 'PLAYER_CHECKED', color, byColor: attackerColor, kingSquare: kingSq });
-      }
-
-      if (!kingSq || (legalMoves.length === 0 && inCheck)) {
-        this._eliminatePlayer(color, attackerColor, 'checkmate');
-        if (this.isGameOver) return;
+        if (!kingSq || (legalMoves.length === 0 && inCheck)) {
+          this._eliminatePlayer(color, attackerColor, 'checkmate');
+          eliminatedSomeone = true;
+          if (this.isGameOver) return;
+          break;
+        }
       }
     }
 
-    // Advance to next surviving player clockwise
+    // 2. Emit PLAYER_CHECKED for any surviving opponent currently in check
+    for (const color of this.turnOrder) {
+      if (color === attackerColor || this.eliminatedColors.has(color)) continue;
+      if (this.isKingInCheck(color)) {
+        const kingSq = this.findKingSquare(color);
+        this.bus?.emit({
+          type: 'PLAYER_CHECKED',
+          color,
+          byColor: attackerColor,
+          kingSquare: kingSq,
+        });
+      }
+    }
+
+    // 3. Insufficient material draw check (only bare Kings or Flotsam left on board)
+    const activeNonKings = [...this.board.values()].filter((p) => !p.isFlotsam && p.type !== 'k');
+    if (activeNonKings.length === 0) {
+      this.isGameOver = true;
+      this.winnerColor = null;
+      this.gameOverReason = 'Patta per Materiale Insufficiente (solo Re rimasti)';
+      this.bus?.emit({
+        type: 'GAME_OVER',
+        winnerColor: null,
+        reason: this.gameOverReason,
+      });
+      return;
+    }
+
+    // 4. Advance to next surviving player clockwise
     for (let step = 1; step <= 3; step++) {
       const nextIdx = (this.activeColorIndex + step) % 3;
       const nextColor = this.turnOrder[nextIdx];
@@ -842,7 +907,7 @@ export class ThreeChessRulesManager {
           if (this.isGameOver) return;
           continue;
         } else {
-          // Stalemate: if 3 players alive, skip turn; if 2 players left, draw
+          // Stalemate: if 2 players left -> draw; if 3 players alive -> eliminate stalemated army
           const aliveCount = 3 - this.eliminatedColors.size;
           if (aliveCount <= 2) {
             this.isGameOver = true;
@@ -855,6 +920,8 @@ export class ThreeChessRulesManager {
             });
             return;
           }
+          this._eliminatePlayer(nextColor, attackerColor, 'stalemate');
+          if (this.isGameOver) return;
           continue;
         }
       }

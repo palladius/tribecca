@@ -2,6 +2,21 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.1.3] - 2026-11-07
+
+### ✨ Added
+- **Tactical Checkmate & King-Hunt AI (`src/managers/SimpleAIManager.js`)**:
+  - Upgraded `SimpleAIManager.chooseMove(color)` with 1-ply lookahead for **Checkmate (`+100000`)**, **Check & Escape Restriction (`+220` to `+750`)**, hanging-piece blunder prevention, enemy-sector pawn promotion march (`row 3 -> 2 -> 1 -> 0`), endgame King-hunt constriction toward the weakest surviving opponent, anti-oscillation history penalty, and optional deterministic Mulberry32 seeding (`setSeed`).
+- **Tactical Check / Checkmate Toast & Victory Banner (`index.html`, `src/main.js`)**:
+  - Added floating `#tactical-toast` alerts for `PLAYER_CHECKED` (`⚠️ SCACCO AL RE ...`), `PLAYER_ELIMINATED`, and `GAME_OVER` (`👑 SCACCO MATTO!`), plus `#hof-victory-banner` inside the Hall of Fame modal with semi-transparent backdrop so the final 3D + 2D checkmate board position remains visible.
+
+### 🐛 Fixed
+- **Castling & Empty-Square Attack Detection (`src/managers/ThreeChessRulesManager.js`)**:
+  - Fixed `getAttackersOf(targetSquareId, defenderColor)` so empty squares (such as castling transit squares `F1`/`D1`) accurately detect diagonal pawn attacks while ignoring non-capturing straight pawn pushes and castling rays.
+  - Enforced FIDE castling checks in `getLegalMovesAndRays` so a King can never castle out of check or across an attacked transit square.
+  - Added cascade elimination loop, 3-player stalemate elimination, and insufficient-material draw detection in `_advanceTurnAndCheckEliminations`.
+  - Added `PLAYER_ELIMINATED` and `GAME_OVER` re-render listeners in `Board2DView.js` and preview-timer cancellation on pause/undo in `SimpleAIManager.js`.
+
 ## [0.1.2] - 2026-11-07
 
 ### 🐛 Fixed

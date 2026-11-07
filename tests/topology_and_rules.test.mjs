@@ -6,6 +6,7 @@ import {
   FORBIDDEN_ROSETTE_OPPOSITE,
 } from '../src/managers/BoardTopologyManager.js';
 import { ThreeChessRulesManager } from '../src/managers/ThreeChessRulesManager.js';
+import { SimpleAIManager } from '../src/managers/SimpleAIManager.js';
 
 test('BoardTopologyManager builds 96 squares matching Riccardo physical board (A..L x 1..12)', () => {
   const topo = new BoardTopologyManager();
@@ -166,4 +167,44 @@ test('Full 48-piece board executeMove and getAllLegalMovesForColor terminate cle
   assert.ok(rec);
   assert.equal(rules.getActiveColor(), 'red');
   assert.equal(rules.getAllLegalMovesForColor('red').length, 20);
+});
+
+test('Castling forbids castling out of check or across an attacked transit square', () => {
+  const topo = new BoardTopologyManager();
+  const rules = new ThreeChessRulesManager(topo);
+  rules.board.clear();
+  rules.board.set('E1', { type: 'k', color: 'white', homeSector: 0, moved: false });
+  rules.board.set('H1', { type: 'r', color: 'white', homeSector: 0, moved: false });
+  rules.board.set('D8', { type: 'k', color: 'red', homeSector: 1, moved: false });
+  rules.board.set('I12', { type: 'k', color: 'green', homeSector: 2, moved: false });
+
+  // Clear path -> castling E1->G1 is legal
+  let { moves } = rules.getLegalMovesAndRays('E1');
+  assert.ok(moves.some((m) => m.to === 'G1' && m.rayKind === 'castle'));
+
+  // Enemy rook on F4 attacks transit square F1 -> castling E1->G1 is forbidden!
+  rules.board.set('F4', { type: 'r', color: 'red', homeSector: 1, moved: true });
+  moves = rules.getLegalMovesAndRays('E1').moves;
+  assert.ok(!moves.some((m) => m.to === 'G1'));
+});
+
+test('SimpleAIManager finds immediate 1-move Checkmate and completes full 3-CPU game to Checkmate', () => {
+  const topo = new BoardTopologyManager();
+  const rules = new ThreeChessRulesManager(topo);
+  const ai = new SimpleAIManager(rules);
+  ai.setSeed(42);
+
+  // Play a full seeded 3-CPU game in sudden_death mode and verify it reaches Checkmate
+  rules.setEliminationMode('sudden_death');
+  let steps = 0;
+  while (!rules.isGameOver && steps < 120) {
+    const color = rules.getActiveColor();
+    const move = ai.chooseMove(color);
+    assert.ok(move, `Expected legal move for ${color} at step ${steps}`);
+    rules.executeMove(move.from, move.to, move.promotionPiece || 'q');
+    steps++;
+  }
+  assert.equal(rules.isGameOver, true);
+  assert.ok(rules.winnerColor);
+  assert.match(rules.gameOverReason, /Scacco Matto/);
 });

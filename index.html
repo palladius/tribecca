@@ -251,11 +251,41 @@
       flex-wrap: wrap;
     }
 
+    /* Tactical Check / Checkmate Toast Banner */
+    #tactical-toast {
+      position: fixed;
+      top: 108px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      z-index: 80;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #tactical-toast[hidden] {
+      display: none !important;
+    }
+    #tactical-toast.toast-check {
+      background: linear-gradient(90deg, #991b1b, #dc2626);
+      color: #fff;
+      border: 1.5px solid #fde047;
+    }
+    #tactical-toast.toast-mate {
+      background: linear-gradient(90deg, #ca8a04, #eab308);
+      color: #0f172a;
+      border: 2px solid #ffffff;
+    }
+
     /* Hall of Fame Overlay (revealed only at Game Over) */
     #hof-section {
       position: fixed;
       inset: 0;
-      background: rgba(9, 15, 29, 0.88);
+      background: rgba(9, 15, 29, 0.58);
       z-index: 90;
       display: flex;
       flex-direction: column;
@@ -267,12 +297,31 @@
       display: none !important;
     }
     .hof-card {
-      background: #0f172a;
-      border: 1.5px solid var(--accent-gold);
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid var(--accent-gold);
       border-radius: 14px;
       padding: 18px;
-      max-width: 560px;
+      max-width: 580px;
       width: 100%;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75);
+    }
+    #hof-victory-banner {
+      background: linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(22, 163, 74, 0.22));
+      border: 1px solid rgba(250, 204, 21, 0.65);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    #hof-victory-title {
+      font-size: 1.18rem;
+      font-weight: 900;
+      color: #fde047;
+      margin-bottom: 4px;
+    }
+    #hof-victory-subtitle {
+      font-size: 0.88rem;
+      color: #f8fafc;
     }
 
     @media (max-width: 860px) {
@@ -423,12 +472,22 @@
     </div>
   </footer>
 
+  <!-- Tactical Check / Checkmate Floating Banner -->
+  <div id="tactical-toast" class="toast-check" hidden></div>
+
   <!-- 5. Hall of Fame Modal (Hidden during gameplay, revealed ONLY at Game Over!) -->
   <section id="hof-section" hidden>
     <div class="hof-card">
+      <div id="hof-victory-banner">
+        <div id="hof-victory-title">👑 SCACCO MATTO!</div>
+        <div id="hof-victory-subtitle">Partita conclusa</div>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h2>🏆 Hall of Fame — TriBecca</h2>
-        <button onclick="document.getElementById('hof-section').hidden = true">✖️ Chiudi</button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="document.getElementById('btn-new-game').click()">🔄 Nuova Partita</button>
+          <button onclick="document.getElementById('hof-section').hidden = true">✖️ Chiudi</button>
+        </div>
       </div>
       <puffin-leaderboard id="game-lb" filter-game="tricolore-chess-3d"></puffin-leaderboard>
     </div>

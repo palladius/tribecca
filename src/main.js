@@ -282,14 +282,76 @@ function initTriBeccaApp() {
     }
   });
 
+  let toastTimer = null;
+  function showTacticalToast(html, kind = 'toast-check', durationMs = 2600) {
+    const toastEl = document.getElementById('tactical-toast');
+    if (!toastEl) return;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastEl.className = kind;
+    toastEl.innerHTML = html;
+    toastEl.hidden = false;
+    if (durationMs > 0) {
+      toastTimer = setTimeout(() => {
+        toastEl.hidden = true;
+      }, durationMs);
+    }
+  }
+
+  bus.on('PLAYER_CHECKED', ({ color, byColor, kingSquare }) => {
+    const defLabel = SECTOR_META[color]?.labelIt || color;
+    const atkLabel = SECTOR_META[byColor]?.labelIt || byColor;
+    showTacticalToast(
+      `⚠️ <strong>SCACCO AL RE ${defLabel.toUpperCase()}</strong> in <code>${kingSquare}</code> (da ${atkLabel})!`,
+      'toast-check',
+      2200
+    );
+  });
+
+  bus.on('PLAYER_ELIMINATED', ({ loserColor, conquerorColor, reason }) => {
+    const loserLabel = SECTOR_META[loserColor]?.labelIt || loserColor;
+    const conqLabel = SECTOR_META[conquerorColor]?.labelIt || conquerorColor;
+    const verb = reason === 'stalemate' ? 'Stallo' : 'SCACCO MATTO';
+    showTacticalToast(
+      `👑 <strong>${verb}!</strong> L'Armata <strong>${conqLabel}</strong> elimina il Re <strong>${loserLabel}</strong>!`,
+      'toast-mate',
+      3800
+    );
+    updateTurnAndSeatsHud();
+  });
+
   bus.on('TURN_CHANGED', () => updateTurnAndSeatsHud());
-  bus.on('GAME_RESET', () => updateTurnAndSeatsHud());
+  bus.on('GAME_RESET', () => {
+    const toastEl = document.getElementById('tactical-toast');
+    if (toastEl) toastEl.hidden = true;
+    updateTurnAndSeatsHud();
+  });
   bus.on('HISTORY_CHANGED', () => updateTurnAndSeatsHud());
   bus.on('SEAT_CONFIG_CHANGED', () => syncSeatSelectorsUI());
   bus.on('AUTOPLAY_TOGGLED', () => updateTurnAndSeatsHud());
 
   bus.on('GAME_OVER', async ({ winnerColor, reason }) => {
     updateTurnAndSeatsHud();
+    const lastRec = rules.moveHistory[rules.moveHistory.length - 1];
+    const winSeat = winnerColor ? seats.getSeat(winnerColor) : null;
+    const winLabel = winnerColor ? SECTOR_META[winnerColor]?.labelIt : 'Patta';
+
+    showTacticalToast(
+      `👑 <strong>SCACCO MATTO!</strong> ${reason}`,
+      'toast-mate',
+      0
+    );
+
+    const hofTitle = document.getElementById('hof-victory-title');
+    const hofSub = document.getElementById('hof-victory-subtitle');
+    if (hofTitle) {
+      hofTitle.textContent = winnerColor
+        ? `👑 SCACCO MATTO! Vince ${winLabel} (${winSeat?.shortName || 'CPU'})`
+        : '🤝 Partita Patta';
+    }
+    if (hofSub) {
+      hofSub.textContent = `${reason} · ${rules.moveHistory.length} mosse${lastRec ? ' · Ultima mossa: ' + lastRec.notation : ''}`;
+    }
+
     const hofSection = document.getElementById('hof-section');
     if (hofSection) {
       hofSection.hidden = false;
