@@ -2,6 +2,13 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.1.2] - 2026-11-07
+
+### 🐛 Fixed
+- **3D Chessboard Tile Visibility (`src/views/Board3DView.js`)**:
+  - Lowered the hexagonal plinth (`baseGeo.translate(0, -0.44, 0)`) so its beveled top face (`y = -0.02`) no longer covers the 96 tiles at `y = +0.02`.
+  - Fixed counter-clockwise triangle winding (`pts[0], pts[2], pts[1]` and `pts[0], pts[3], pts[2]`) in the Three.js XZ plane so all 96 tile normals point straight up (`+Y`) toward the directional lights, and added golden 3D borders around the 6 central Rosette squares (`D4, D5, I5, I9, E9, E4`).
+
 ## [0.1.1] - 2026-11-07
 
 ### 🐛 Fixed

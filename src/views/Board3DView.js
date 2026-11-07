@@ -288,7 +288,8 @@ export class Board3DView {
       bevelSegments: 2,
     });
     baseGeo.rotateX(-Math.PI / 2);
-    baseGeo.translate(0, -0.37, 0);
+    // Top of bevel is at +0.42 before translation; translate by -0.44 so plinth top sits at y = -0.02 (below tiles at y = +0.02)
+    baseGeo.translate(0, -0.44, 0);
 
     const baseMat = new THREE.MeshStandardMaterial({
       color: this.boardTheme === 'wood' ? 0x3b1d0a : 0x1e293b,
@@ -336,13 +337,14 @@ export class Board3DView {
         z: sq.center.z + (p.z - sq.center.z) * shrink,
       }));
 
+      // Counter-clockwise in Three.js XZ plane so normal points straight UP (+Y) toward the lights!
       const positions = new Float32Array([
         pts[0].x, 0.02, pts[0].z,
+        pts[2].x, 0.02, pts[2].z,
         pts[1].x, 0.02, pts[1].z,
-        pts[2].x, 0.02, pts[2].z,
         pts[0].x, 0.02, pts[0].z,
-        pts[2].x, 0.02, pts[2].z,
         pts[3].x, 0.02, pts[3].z,
+        pts[2].x, 0.02, pts[2].z,
       ]);
 
       const geo = new THREE.BufferGeometry();
@@ -352,8 +354,8 @@ export class Board3DView {
       const baseColor = this._getTileBaseColor(sq);
       const mat = new THREE.MeshStandardMaterial({
         color: baseColor,
-        roughness: this.boardTheme === 'wood' ? 0.45 : 0.26,
-        metalness: 0.06,
+        roughness: this.boardTheme === 'wood' ? 0.42 : 0.28,
+        metalness: 0.05,
         side: THREE.DoubleSide,
       });
 
@@ -362,6 +364,19 @@ export class Board3DView {
       mesh.userData = { squareId: sq.id, baseColor };
       this.boardGroup.add(mesh);
       this.tileMeshes.set(sq.id, mesh);
+
+      // Highlight golden border on the 6 Rosette squares (D4, D5, I5, I9, E9, E4)
+      if (sq.isRosette) {
+        const loopPts = [
+          new THREE.Vector3(pts[0].x, 0.026, pts[0].z),
+          new THREE.Vector3(pts[1].x, 0.026, pts[1].z),
+          new THREE.Vector3(pts[2].x, 0.026, pts[2].z),
+          new THREE.Vector3(pts[3].x, 0.026, pts[3].z),
+        ];
+        const loopGeo = new THREE.BufferGeometry().setFromPoints(loopPts);
+        const loopMat = new THREE.LineBasicMaterial({ color: 0xf59e0b });
+        this.boardGroup.add(new THREE.LineLoop(loopGeo, loopMat));
+      }
 
       // Coordinate canvas sprite on outer border
       if (sq.row === 0) {
