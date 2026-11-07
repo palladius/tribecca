@@ -85,6 +85,132 @@ export class PlayerSeatManager {
     this.aiDelayMs = 950;
     this.previewAiRays = true;
     this._timerId = null;
+
+    /** @type {Set<string>} Set of PuffinLogin profileIds verified via PIN/password in this multi-login session */
+    this.verifiedProfiles = new Set();
+    this._loadVerifiedProfiles();
+  }
+
+  _loadVerifiedProfiles() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('tribecca_verified_profiles_v1');
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            for (const id of arr) {
+              if (id && id !== 'guest' && id !== 'cpu') {
+                this.verifiedProfiles.add(id);
+              }
+            }
+          }
+        }
+        const puffinAuthRaw = localStorage.getItem('puffin_active_user_v2');
+        if (puffinAuthRaw) {
+          const parsed = JSON.parse(puffinAuthRaw);
+          if (parsed?.userId && parsed.userId !== 'guest') {
+            this.verifiedProfiles.add(parsed.userId);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  _saveVerifiedProfiles() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(
+          'tribecca_verified_profiles_v1',
+          JSON.stringify([...this.verifiedProfiles])
+        );
+      }
+    } catch (_) {}
+  }
+
+  requiresAuth(profileId) {
+    return Boolean(profileId && profileId !== 'guest' && profileId !== 'cpu');
+  }
+
+  isProfileVerified(profileId) {
+    if (!this.requiresAuth(profileId)) return true;
+    return this.verifiedProfiles.has(profileId);
+  }
+
+  isSeatVerified(color) {
+    const seat = this.seats[color];
+    if (!seat) return false;
+    return this.isProfileVerified(seat.profileId);
+  }
+
+  markProfileVerified(profileId) {
+    if (!this.requiresAuth(profileId)) return;
+    this.verifiedProfiles.add(profileId);
+    this._saveVerifiedProfiles();
+    this.bus?.emit({
+      type: 'SEAT_CONFIG_CHANGED',
+      seats: { ...this.seats },
+      verifiedProfiles: [...this.verifiedProfiles],
+    });
+  }
+
+  clearVerifiedProfiles() {
+    this.verifiedProfiles.clear();
+    this._saveVerifiedProfiles();
+    this.bus?.emit({
+      type: 'SEAT_CONFIG_CHANGED',
+      seats: { ...this.seats },
+      verifiedProfiles: [],
+    });
+  }
+
+  /**
+   * Returns all human seats that use a named family profile (`riccardo`, `ale`, `seby`, `kate`, `lucilla`)
+   * and have NOT yet entered their PIN/password.
+   */
+  getUnverifiedHumanSeats() {
+    const list = [];
+    for (const color of PLAYER_COLORS) {
+      const seat = this.seats[color];
+      if (seat && seat.kind === 'human' && this.requiresAuth(seat.profileId)) {
+        if (!this.verifiedProfiles.has(seat.profileId)) {
+          list.push({ color, profileId: seat.profileId, seat });
+        }
+      }
+    }
+    return list;
+  }
+
+  /**
+   * Returns all human seats that use a named family profile (`riccardo`, `ale`, `seby`, `kate`, `lucilla`).
+   */
+  getNamedHumanSeats() {
+    const list = [];
+    for (const color of PLAYER_COLORS) {
+      const seat = this.seats[color];
+      if (seat && seat.kind === 'human' && this.requiresAuth(seat.profileId)) {
+        list.push({
+          color,
+          profileId: seat.profileId,
+          seat,
+          verified: this.verifiedProfiles.has(seat.profileId),
+        });
+      }
+    }
+    return list;
+  }
+
+  /**
+   * Returns the official PuffinLogin `player_id` for Leaderboard submission when `color` wins:
+   * - If `color` is a verified named human (`riccardo`, `ale`, `seby`, `kate`, `lucilla`), returns `seat.profileId`.
+   * - Otherwise returns `'guest'` (unless verified right before saving).
+   */
+  getEffectiveLeaderboardUserId(color) {
+    const seat = this.seats[color];
+    if (!seat || seat.kind !== 'human') return 'guest';
+    if (this.requiresAuth(seat.profileId) && this.verifiedProfiles.has(seat.profileId)) {
+      return seat.profileId;
+    }
+    return 'guest';
   }
 
   init(ctx) {

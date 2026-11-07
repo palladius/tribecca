@@ -2,6 +2,15 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.1.6] - 2026-11-07
+
+### ✨ Added
+- **Multi-Login for 1–3 Human Players at the Table (`src/managers/PlayerSeatManager.js`, `src/main.js`, `index.html`, `src/views/Board2DView.js`)**:
+  - Added per-player verification tracking (`verifiedProfiles` persisted in `localStorage`) so up to 3 family players (`Papino Riccardo 🦖`, `Ale 🐉`, `Seby 🐴`, `Kate 👸`, `Nonna 👵`) can authenticate sequentially via `<puffin-login>` PIN/password at the same table.
+  - Added per-seat **`🔒 Login` / `✅ Loggato`** pill buttons, a top-bar **`🔑 Multi-Login (N/M)`** queue button, and **`✅` / `🔒`** indicators on the 2D board medallions.
+  - Synced the top-right `<puffin-login>` badge to automatically display the currently moving verified family player on every turn rotation.
+  - Fixed `GAME_OVER` Hall of Fame submission to record scores under the winning seat's verified `player_id` (`riccardo`, `ale`, `seby`, etc.) instead of `Guest`, added a 1-click **`🔐 Fai Login ora per salvare questa vittoria a tuo nome!`** recovery button in the Hall of Fame modal, and retroactively upgraded Riccardo's 95-move (`810 pt`) victory from `Guest` to `Papino Riccardo`.
+
 ## [0.1.5] - 2026-11-07
 
 ### 🐛 Fixed

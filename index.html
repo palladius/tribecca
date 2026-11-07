@@ -179,6 +179,39 @@
       border-color: var(--accent-gold);
       box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
     }
+    .seat-auth-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .seat-auth-pill.verified {
+      background: rgba(22, 163, 74, 0.28);
+      border: 1px solid #4ade80;
+      color: #bbf7d0;
+    }
+    .seat-auth-pill.unverified {
+      background: rgba(249, 115, 22, 0.28);
+      border: 1px solid #fb923c;
+      color: #fed7aa;
+    }
+    .seat-auth-pill.neutral {
+      background: rgba(51, 65, 85, 0.45);
+      border: 1px solid #64748b;
+      color: #cbd5e1;
+      cursor: default;
+    }
+    .multilogin-btn.all-verified {
+      background: rgba(22, 163, 74, 0.3);
+      border-color: #4ade80;
+      color: #dcfce7;
+    }
+    .multilogin-btn.needs-auth {
+      background: rgba(249, 115, 22, 0.32);
+      border-color: #fb923c;
+      color: #ffedd5;
+    }
     #stage-turn-hero-card {
       position: absolute;
       top: 10px;
@@ -484,6 +517,9 @@
       <button data-cam-angle="120" title="Inquadra Rosso (120°)">🔴 120°</button>
       <button data-cam-angle="240" title="Inquadra Verde/Nero (240°)">🟢 240°</button>
 
+      <button type="button" id="btn-multilogin-table" class="multilogin-btn needs-auth" title="Autentica tutti i giocatori umani al tavolo con PIN/Password per abilitare la modalità NON-Guest">
+        🔑 Multi-Login (0/1)
+      </button>
       <puffin-login id="puffin-widget" app-id="tricolore-chess-3d" require-login="false" lang="it"></puffin-login>
     </div>
   </header>
@@ -504,6 +540,7 @@
           <option value="guest">🐧 Ospite</option>
           <option value="cpu">🤖 Computer</option>
         </select>
+        <button type="button" id="seat-auth-btn-white" class="seat-auth-pill unverified" title="Clicca per fare Login con PIN/Password per questo posto">🔒 Login</button>
       </div>
 
       <!-- Seat Red (120°) -->
@@ -519,6 +556,7 @@
           <option value="lucilla">👵 Nonna Lucilla</option>
           <option value="guest">🐧 Ospite</option>
         </select>
+        <button type="button" id="seat-auth-btn-red" class="seat-auth-pill neutral" title="Stato autenticazione posto Rosso">🤖 Auto</button>
       </div>
 
       <!-- Seat Green (240°) -->
@@ -534,6 +572,7 @@
           <option value="lucilla">👵 Nonna Lucilla</option>
           <option value="guest">🐧 Ospite</option>
         </select>
+        <button type="button" id="seat-auth-btn-green" class="seat-auth-pill neutral" title="Stato autenticazione posto Verde">🤖 Auto</button>
       </div>
     </div>
 
@@ -606,6 +645,9 @@
       <div id="hof-victory-banner">
         <div id="hof-victory-title">👑 SCACCO MATTO!</div>
         <div id="hof-victory-subtitle">Partita conclusa</div>
+        <button type="button" id="btn-claim-winner-login" hidden style="margin-top:10px;width:100%;justify-content:center;background:#facc15;color:#0f172a;font-weight:900;border:2px solid #ffffff;">
+          🔐 Fai Login ora per salvare questa vittoria a tuo nome (non Guest)!
+        </button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h2>🏆 Hall of Fame — TriBecca</h2>

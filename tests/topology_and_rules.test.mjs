@@ -7,6 +7,7 @@ import {
 } from '../src/managers/BoardTopologyManager.js';
 import { ThreeChessRulesManager } from '../src/managers/ThreeChessRulesManager.js';
 import { SimpleAIManager } from '../src/managers/SimpleAIManager.js';
+import { PlayerSeatManager } from '../src/managers/PlayerSeatManager.js';
 
 test('BoardTopologyManager builds 96 squares matching Riccardo physical board (A..L x 1..12)', () => {
   const topo = new BoardTopologyManager();
@@ -230,4 +231,27 @@ test('Pawn reaching enemy back rank (e.g. E11 -> E12) supports promoting to q, r
     assert.equal(rules.getPiece('E12').type, promoType);
     assert.match(rec.notation, new RegExp(`=${promoType.toUpperCase()}$`));
   }
+});
+
+test('PlayerSeatManager Multi-Login tracks N verified family players and resolves non-Guest Leaderboard IDs', () => {
+  const topo = new BoardTopologyManager();
+  const rules = new ThreeChessRulesManager(topo);
+  const seats = new PlayerSeatManager(rules);
+
+  seats.applyPreset('3v0'); // White=riccardo, Red=ale, Green=seby
+  seats.clearVerifiedProfiles();
+
+  assert.equal(seats.getUnverifiedHumanSeats().length, 3);
+  assert.equal(seats.getEffectiveLeaderboardUserId('white'), 'guest');
+
+  // Authenticate Papino, Ale, and Seby one by one (Multi-Login)
+  seats.markProfileVerified('riccardo');
+  assert.equal(seats.getUnverifiedHumanSeats().length, 2);
+  assert.equal(seats.getEffectiveLeaderboardUserId('white'), 'riccardo');
+
+  seats.markProfileVerified('ale');
+  seats.markProfileVerified('seby');
+  assert.equal(seats.getUnverifiedHumanSeats().length, 0);
+  assert.equal(seats.getEffectiveLeaderboardUserId('red'), 'ale');
+  assert.equal(seats.getEffectiveLeaderboardUserId('green'), 'seby');
 });

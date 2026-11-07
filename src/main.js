@@ -11,7 +11,7 @@ import { SimpleAIManager } from './managers/SimpleAIManager.js';
 import { AudioListener } from './listeners/AudioListener.js';
 import { Board2DView } from './views/Board2DView.js';
 import { Board3DView } from './views/Board3DView.js';
-import { PuffinLogin } from './puffin-login.js';
+import { PuffinLogin, validateAndNormalizeScorePayload } from './puffin-login.js';
 
 const PIECE_NAMES_IT = {
   k: 'Re ♔',
@@ -139,6 +139,100 @@ function initTriBeccaApp() {
   const view2D = new Board2DView(view2dContainer, topology, rules, bus, handleSquareClick, seats);
   const view3D = new Board3DView(view3dContainer, topology, rules, seats, bus, handleSquareClick);
 
+  const puffinWidget = document.getElementById('puffin-widget');
+  const btnMultiLogin = document.getElementById('btn-multilogin-table');
+  const btnClaimWinner = document.getElementById('btn-claim-winner-login');
+  let activeAuthTargetColor = null;
+  let multiLoginQueueActive = false;
+  let lastSubmittedScoreId = null;
+  let lastWinnerColor = null;
+
+  // Retroactively upgrade any unauthenticated White victory (like Riccardo's 95-move 810pt game!) from Guest to Papino Riccardo
+  function upgradeHistoricalGuestScoresForRiccardo() {
+    try {
+      const raw = localStorage.getItem('puffin_leaderboard_scores_v2');
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      if (!Array.isArray(list)) return;
+      let changed = false;
+      const updated = list.map((item) => {
+        if (
+          item &&
+          item.game_id === 'tricolore-chess-3d' &&
+          !item.player_id &&
+          (item.score === 810 || item.extra?.winner_color === 'white')
+        ) {
+          changed = true;
+          return validateAndNormalizeScorePayload({
+            ...item,
+            player_id: 'riccardo',
+          });
+        }
+        return item;
+      });
+      if (changed) {
+        localStorage.setItem('puffin_leaderboard_scores_v2', JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent('puffin-score-recorded'));
+      }
+    } catch (_) {}
+  }
+  upgradeHistoricalGuestScoresForRiccardo();
+
+  function upgradeScoreOwnerInStorage(scoreId, newProfileId) {
+    if (!scoreId || !newProfileId || newProfileId === 'guest' || newProfileId === 'cpu') return;
+    try {
+      const raw = localStorage.getItem('puffin_leaderboard_scores_v2');
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      if (!Array.isArray(list)) return;
+      let updatedRecord = null;
+      const updated = list.map((item) => {
+        if (item && item.id === scoreId) {
+          updatedRecord = validateAndNormalizeScorePayload({
+            ...item,
+            player_id: newProfileId,
+          });
+          return updatedRecord;
+        }
+        return item;
+      });
+      if (updatedRecord) {
+        localStorage.setItem('puffin_leaderboard_scores_v2', JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent('puffin-score-recorded', { detail: updatedRecord }));
+      }
+    } catch (_) {}
+  }
+
+  function promptSeatLogin(color, continueQueue = false) {
+    const seat = seats.getSeat(color);
+    if (!seat || seat.kind !== 'human' || !seats.requiresAuth(seat.profileId)) return;
+    activeAuthTargetColor = color;
+    multiLoginQueueActive = continueQueue;
+    const colorLabel = SECTOR_META[color]?.labelIt || color;
+    showTacticalToast(
+      `🔐 <strong>Multi-Login (${colorLabel}):</strong> Inserisci PIN/Password per <strong>${seat.displayName}</strong> (oppure scegli Ospite)`,
+      'toast-mate',
+      3500
+    );
+    if (puffinWidget && typeof puffinWidget.openModal === 'function') {
+      puffinWidget.openModal(seat.profileId);
+    }
+  }
+
+  function startTableMultiLoginQueue() {
+    const unverified = seats.getUnverifiedHumanSeats();
+    if (unverified.length === 0) {
+      const named = seats.getNamedHumanSeats();
+      showTacticalToast(
+        `✅ <strong>Tutti i ${named.length} giocatori umani al tavolo sono già autenticati!</strong> Modalità NON-Guest attiva.`,
+        'toast-mate',
+        2600
+      );
+      return;
+    }
+    promptSeatLogin(unverified[0].color, true);
+  }
+
   // View Mode Switcher ('3d' | '2d' | 'split')
   const stageEl = document.getElementById('game-stage');
   const setViewMode = (mode) => {
@@ -189,15 +283,40 @@ function initTriBeccaApp() {
     const sel = document.getElementById(`seat-select-${color}`);
     sel?.addEventListener('change', () => {
       seats.setSeatProfile(color, sel.value);
+      if (seats.requiresAuth(sel.value) && !seats.isProfileVerified(sel.value)) {
+        promptSeatLogin(color, false);
+      }
+    });
+
+    const authBtn = document.getElementById(`seat-auth-btn-${color}`);
+    authBtn?.addEventListener('click', () => {
+      const seat = seats.getSeat(color);
+      if (seat?.kind === 'human' && seats.requiresAuth(seat.profileId)) {
+        promptSeatLogin(color, false);
+      }
     });
   }
+
+  btnMultiLogin?.addEventListener('click', () => {
+    startTableMultiLoginQueue();
+  });
+
+  btnClaimWinner?.addEventListener('click', () => {
+    if (lastWinnerColor) {
+      promptSeatLogin(lastWinnerColor, false);
+    }
+  });
 
   // Preset Combo Buttons (1v2, 2v1, 3v0, 0v3)
   document.querySelectorAll('[data-preset-btn]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const currentUser = PuffinLogin.getCurrentUser();
-      seats.applyPreset(btn.dataset.presetBtn, currentUser?.id || 'riccardo');
+      const preset = btn.dataset.presetBtn;
+      seats.applyPreset(preset, currentUser?.id || 'riccardo');
       syncSeatSelectorsUI();
+      if (preset !== '0v3' && seats.getUnverifiedHumanSeats().length > 0) {
+        startTableMultiLoginQueue();
+      }
     });
   });
 
@@ -253,12 +372,68 @@ function initTriBeccaApp() {
     rules.resetGame('white');
   });
 
-  // React to PuffinLogin authentication change -> assign logged-in hero to White seat!
-  window.addEventListener('puffin-auth-change', (e) => {
+  // React to PuffinLogin authentication event (`puffin-auth-updated`) for Multi-Login!
+  let _suppressAuthCascade = false;
+  window.addEventListener('puffin-auth-updated', (e) => {
+    if (_suppressAuthCascade) return;
     const user = e.detail?.user;
-    if (user?.id && PUFFIN_SEAT_PROFILES[user.id]) {
-      seats.setSeatProfile('white', user.id);
+    if (!user) {
+      seats.clearVerifiedProfiles();
+      multiLoginQueueActive = false;
+      activeAuthTargetColor = null;
       syncSeatSelectorsUI();
+      return;
+    }
+
+    if (user.id === 'guest') {
+      if (activeAuthTargetColor) {
+        seats.setSeatProfile(activeAuthTargetColor, 'guest');
+      }
+    } else if (PUFFIN_SEAT_PROFILES[user.id]) {
+      seats.markProfileVerified(user.id);
+      if (activeAuthTargetColor) {
+        seats.setSeatProfile(activeAuthTargetColor, user.id);
+      } else {
+        // If user clicked the top-right PuffinLogin widget directly, assign to White if no seat has this user yet
+        const alreadySeated = PLAYER_COLORS.some((c) => seats.getSeat(c)?.profileId === user.id);
+        if (!alreadySeated) {
+          seats.setSeatProfile('white', user.id);
+        }
+      }
+
+      // If this user just logged in to claim a Game Over victory score, upgrade the score in localStorage!
+      if (lastSubmittedScoreId && lastWinnerColor) {
+        const winSeat = seats.getSeat(lastWinnerColor);
+        if (winSeat?.profileId === user.id) {
+          upgradeScoreOwnerInStorage(lastSubmittedScoreId, user.id);
+          if (btnClaimWinner) btnClaimWinner.hidden = true;
+          showTacticalToast(
+            `🏆 <strong>Vittoria accreditata a ${winSeat.displayName}</strong> nella Hall of Fame!`,
+            'toast-mate',
+            3200
+          );
+        }
+      }
+    }
+
+    activeAuthTargetColor = null;
+    syncSeatSelectorsUI();
+
+    if (multiLoginQueueActive) {
+      const remaining = seats.getUnverifiedHumanSeats();
+      if (remaining.length > 0) {
+        setTimeout(() => {
+          promptSeatLogin(remaining[0].color, true);
+        }, 260);
+      } else {
+        multiLoginQueueActive = false;
+        const named = seats.getNamedHumanSeats();
+        showTacticalToast(
+          `🔓 <strong>Multi-Login completato (${named.length}/${named.length})!</strong> Partita ufficiale NON-Guest abilitata!`,
+          'toast-mate',
+          3400
+        );
+      }
     }
   });
 
@@ -267,9 +442,41 @@ function initTriBeccaApp() {
       const seat = seats.getSeat(color);
       const sel = document.getElementById(`seat-select-${color}`);
       const avatarImg = document.getElementById(`seat-avatar-${color}`);
+      const authBtn = document.getElementById(`seat-auth-btn-${color}`);
       if (sel && seat) sel.value = seat.profileId;
       if (avatarImg && seat) avatarImg.src = seat.avatar;
+      if (authBtn && seat) {
+        if (seat.kind === 'cpu') {
+          authBtn.className = 'seat-auth-pill neutral';
+          authBtn.textContent = '🤖 Auto';
+        } else if (seat.profileId === 'guest') {
+          authBtn.className = 'seat-auth-pill neutral';
+          authBtn.textContent = '🐧 Guest';
+        } else if (seats.isProfileVerified(seat.profileId)) {
+          authBtn.className = 'seat-auth-pill verified';
+          authBtn.textContent = '✅ Loggato';
+        } else {
+          authBtn.className = 'seat-auth-pill unverified';
+          authBtn.textContent = '🔒 Login';
+        }
+      }
     }
+
+    if (btnMultiLogin) {
+      const named = seats.getNamedHumanSeats();
+      const verifiedCount = named.filter((s) => s.verified).length;
+      if (named.length === 0) {
+        btnMultiLogin.className = 'multilogin-btn all-verified';
+        btnMultiLogin.textContent = '🤖 Tavolo Auto/Guest';
+      } else if (verifiedCount === named.length) {
+        btnMultiLogin.className = 'multilogin-btn all-verified';
+        btnMultiLogin.textContent = `✅ Multi-Login (${verifiedCount}/${named.length} OK)`;
+      } else {
+        btnMultiLogin.className = 'multilogin-btn needs-auth';
+        btnMultiLogin.textContent = `🔑 Multi-Login (${verifiedCount}/${named.length} Loggati)`;
+      }
+    }
+
     updateTurnAndSeatsHud();
   }
 
@@ -337,6 +544,23 @@ function initTriBeccaApp() {
       if (card) {
         card.classList.toggle('active-turn', c === activeColor && !rules.isGameOver);
         card.classList.toggle('eliminated', rules.eliminatedColors.has(c));
+      }
+    }
+
+    // Keep top-right <puffin-login> badge synced to the active turn's verified human player!
+    if (
+      seat?.kind === 'human' &&
+      seats.requiresAuth(seat.profileId) &&
+      seats.isProfileVerified(seat.profileId) &&
+      puffinWidget &&
+      typeof puffinWidget.saveActiveSession === 'function' &&
+      puffinWidget.getCurrentUser()?.id !== seat.profileId
+    ) {
+      _suppressAuthCascade = true;
+      try {
+        puffinWidget.saveActiveSession(seat.profileId, false);
+      } finally {
+        _suppressAuthCascade = false;
       }
     }
 
@@ -451,20 +675,40 @@ function initTriBeccaApp() {
     if (hofSection) {
       hofSection.hidden = false;
     }
+
+    lastWinnerColor = winnerColor || null;
+    const effectivePlayerId = winnerColor ? seats.getEffectiveLeaderboardUserId(winnerColor) : 'guest';
+    const isUnverifiedNamedWinner =
+      Boolean(winSeat && winSeat.kind === 'human' && seats.requiresAuth(winSeat.profileId)) &&
+      !seats.isProfileVerified(winSeat.profileId);
+
+    if (btnClaimWinner) {
+      if (isUnverifiedNamedWinner) {
+        btnClaimWinner.hidden = false;
+        btnClaimWinner.textContent = `🔐 Fai Login ora come ${winSeat.displayName} per salvare questa vittoria a tuo nome (non Guest)!`;
+      } else {
+        btnClaimWinner.hidden = true;
+      }
+    }
+
     try {
-      await PuffinLogin.submitScore({
+      const submitted = await PuffinLogin.submitScore({
         appId: 'tricolore-chess-3d',
+        player_id: effectivePlayerId === 'guest' ? null : effectivePlayerId,
         score: winnerColor ? 1000 - rules.moveHistory.length * 2 : 500,
         startedAt: new Date(Date.now() - rules.moveHistory.length * 3000).toISOString(),
         endedAt: new Date().toISOString(),
         durationSec: Math.max(10, rules.moveHistory.length * 3),
         extra: {
           winner_color: winnerColor || 'draw',
+          winner_profile: winSeat?.profileId || 'cpu',
+          seats_summary: `${seats.getSeat('white')?.shortName} vs ${seats.getSeat('red')?.shortName} vs ${seats.getSeat('green')?.shortName}`,
           elimination_mode: rules.eliminationMode,
           moves_count: rules.moveHistory.length,
           reason,
         },
       });
+      lastSubmittedScoreId = submitted?.id || null;
     } catch (_) {
       // Offline / guest fallback
     }

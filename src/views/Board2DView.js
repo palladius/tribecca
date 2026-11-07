@@ -678,16 +678,23 @@ export class Board2DView {
       avatarRing.setAttribute('stroke-width', isTurn ? '0.065' : '0.045');
       g.appendChild(avatarRing);
 
-      // Top text: Player name (e.g. "Ale 🐉", "Seby 🐴", "Papino 🦖")
+      const authBadge =
+        seat.kind === 'human' && this.seats?.requiresAuth?.(seat.profileId)
+          ? this.seats.isProfileVerified(seat.profileId)
+            ? ' ✅'
+            : ' 🔒'
+          : '';
+
+      // Top text: Player name (e.g. "Ale 🐉 ✅", "Seby 🐴 ✅", "Papino 🦖 ✅")
       const nameTxt = document.createElementNS(SVG_NS, 'text');
       nameTxt.setAttribute('x', '-0.64');
       nameTxt.setAttribute('y', '-0.13');
       nameTxt.setAttribute('text-anchor', 'start');
       nameTxt.setAttribute('dominant-baseline', 'central');
-      nameTxt.setAttribute('font-size', '0.31');
+      nameTxt.setAttribute('font-size', '0.29');
       nameTxt.setAttribute('font-weight', '800');
       nameTxt.setAttribute('fill', isTurn ? '#fde047' : '#f8fafc');
-      nameTxt.textContent = `${cfg.dot} ${seat.shortName || cfg.armyLabel}`;
+      nameTxt.textContent = `${cfg.dot} ${seat.shortName || cfg.armyLabel}${authBadge}`;
       g.appendChild(nameTxt);
 
       // Bottom text: Turn status ("👈 TOCCA A TE!" or army label)
