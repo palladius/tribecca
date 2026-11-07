@@ -73,11 +73,24 @@
     }
 
     .turn-pill {
-      padding: 6px 14px;
-      background: rgba(30, 41, 59, 0.95);
-      border: 1px solid rgba(250, 204, 21, 0.45);
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 4px 14px 4px 6px;
+      background: rgba(30, 41, 59, 0.96);
+      border: 1.5px solid rgba(250, 204, 21, 0.65);
       border-radius: 999px;
       font-size: 0.9rem;
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.2);
+    }
+    .turn-pill-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent-gold);
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.45);
+      flex-shrink: 0;
     }
     .check-badge {
       margin-left: 6px;
@@ -148,18 +161,45 @@
     }
     .seat-card.active-turn {
       border-color: var(--accent-gold);
-      box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+      background: rgba(30, 41, 59, 0.98);
     }
     .seat-card.eliminated {
       opacity: 0.42;
       text-decoration: line-through;
     }
     .seat-avatar {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1px solid rgba(255, 255, 255, 0.35);
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+    }
+    .seat-card.active-turn .seat-avatar {
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+    }
+    #stage-turn-hero-card {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 5px 13px 5px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1.5px solid var(--accent-gold);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+      pointer-events: none;
+    }
+    #stage-turn-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent-gold);
     }
 
     /* Main Stage (3D / 2D / Split) */
@@ -449,6 +489,13 @@
   <main id="game-stage" data-view-mode="split">
     <div id="board-3d-panel" class="board-panel">
       <div class="panel-tag">🎲 Vista 3D (Ruota di 120° a ogni mossa · Trascina per orbitare)</div>
+      <div id="stage-turn-hero-card">
+        <img id="stage-turn-avatar" src="assets/avatars/riccardo.png" alt="Avatar Turno" />
+        <div>
+          <div id="stage-turn-title" style="font-size:0.84rem;font-weight:800;color:#fde047;">Tocca a: Papino 🦖</div>
+          <div id="stage-turn-sub" style="font-size:0.72rem;color:#cbd5e1;">⚪ Armata Bianca</div>
+        </div>
+      </div>
       <div id="board-3d-container"></div>
     </div>
     <div id="board-2d-panel" class="board-panel">

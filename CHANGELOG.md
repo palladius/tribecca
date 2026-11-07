@@ -2,6 +2,13 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.1.4] - 2026-11-07
+
+### ✨ Added
+- **PuffinLogin Player Avatars on Active Turn & 2D/3D Board Sides (`index.html`, `src/main.js`, `src/views/Board2DView.js`, `src/managers/PlayerSeatManager.js`)**:
+  - Added large circular PuffinLogin avatar (`assets/avatars/ale.png`, `assets/avatars/seby.png`, `assets/avatars/riccardo.png`, etc.) directly inside the top `#active-turn-banner` Turn Pill and in a floating `#stage-turn-hero-card` badge on the 3D view (`[Avatar] Tocca a: Ale 🐉 · 🔴 Armata Rossa`).
+  - Added 3 upright SVG PuffinLogin Seat Medallions (`renderSeatsMedallions()`) outside the 3 home edges of the 2D hexagonal board (`⚪ Bianco` at `90°`, `🔴 Rosso` at `210°`, `🟢 Verde` at `330°`) that counter-rotate with the 120° turn rotation and light up with a golden halo and `👈 TOCCA A TE!` when it is that child/player's turn.
+
 ## [0.1.3] - 2026-11-07
 
 ### ✨ Added

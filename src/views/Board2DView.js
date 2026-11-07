@@ -33,13 +33,15 @@ export class Board2DView {
    * @param {import('../managers/ThreeChessRulesManager.js').ThreeChessRulesManager} rules
    * @param {import('../core/GameEventBus.js').GameEventBus} bus
    * @param {(squareId: string) => void} onSquareClick
+   * @param {import('../managers/PlayerSeatManager.js').PlayerSeatManager} [seats]
    */
-  constructor(container, topology, rules, bus, onSquareClick) {
+  constructor(container, topology, rules, bus, onSquareClick, seats = null) {
     this.container = container;
     this.topology = topology;
     this.rules = rules;
     this.bus = bus;
     this.onSquareClick = onSquareClick;
+    this.seats = seats;
 
     /** @type {'tricolore' | 'wood'} */
     this.boardTheme = 'tricolore';
@@ -56,11 +58,14 @@ export class Board2DView {
   _initSvg() {
     this.container.innerHTML = '';
     const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('viewBox', '-7.4 -7.4 14.8 14.8');
+    svg.setAttribute('viewBox', '-8.35 -8.35 16.7 16.7');
     svg.setAttribute('class', 'board-2d-svg');
     svg.style.width = '100%';
     svg.style.height = '100%';
     svg.style.userSelect = 'none';
+
+    this.defsEl = document.createElementNS(SVG_NS, 'defs');
+    svg.appendChild(this.defsEl);
 
     this.rootGroup = document.createElementNS(SVG_NS, 'g');
     this.rootGroup.setAttribute('class', 'board-2d-rotatable');
@@ -74,12 +79,15 @@ export class Board2DView {
     this.piecesLayer.style.pointerEvents = 'none';
     this.labelsLayer = document.createElementNS(SVG_NS, 'g');
     this.labelsLayer.style.pointerEvents = 'none';
+    this.seatsLayer = document.createElementNS(SVG_NS, 'g');
+    this.seatsLayer.style.pointerEvents = 'none';
 
     this.rootGroup.appendChild(this.frameLayer);
     this.rootGroup.appendChild(this.squaresLayer);
     this.rootGroup.appendChild(this.raysLayer);
     this.rootGroup.appendChild(this.piecesLayer);
     this.rootGroup.appendChild(this.labelsLayer);
+    this.rootGroup.appendChild(this.seatsLayer);
 
     this.svg = svg;
     this.container.appendChild(svg);
@@ -126,6 +134,9 @@ export class Board2DView {
     this.bus.on('GAME_OVER', () => {
       this.render();
     });
+    this.bus.on('SEAT_CONFIG_CHANGED', () => {
+      this.renderSeatsMedallions();
+    });
   }
 
   setTheme(theme) {
@@ -142,12 +153,14 @@ export class Board2DView {
       this.rootGroup.setAttribute('transform', `rotate(${rot})`);
     }
     this.renderPieces();
+    this.renderSeatsMedallions();
   }
 
   render() {
     this.renderFrameAndSquares();
     this.renderRays();
     this.renderPieces();
+    this.renderSeatsMedallions();
   }
 
   _getArmyPalette(color, isFlotsam = false) {
@@ -544,6 +557,159 @@ export class Board2DView {
       g.appendChild(icon);
 
       this.piecesLayer.appendChild(g);
+    }
+  }
+
+  /**
+   * Renders the 3 PuffinLogin player avatar medallions outside the 3 home sides of the 2D board
+   * (`⚪ Bianco` at 90° South, `🔴 Rosso` at 210° NW, `🟢 Verde` at 330° NE), illuminated on active turn!
+   */
+  renderSeatsMedallions() {
+    if (!this.seatsLayer || !this.defsEl) return;
+    this.seatsLayer.innerHTML = '';
+    this.defsEl.innerHTML = '';
+
+    const counterRot = this.rotate2DWithTurn ? this.currentRotationDeg : 0;
+    const activeColor = this.rules.getActiveColor();
+
+    const sideConfigs = [
+      {
+        color: 'white',
+        deg: 90,
+        radius: 6.82,
+        dot: '⚪',
+        armyLabel: 'Bianco',
+        strokeColor: '#f8fafc',
+      },
+      {
+        color: 'red',
+        deg: 210,
+        radius: 6.58,
+        dot: '🔴',
+        armyLabel: 'Rosso',
+        strokeColor: '#ef4444',
+      },
+      {
+        color: 'green',
+        deg: 330,
+        radius: 6.58,
+        dot: this.boardTheme === 'wood' ? '⚫' : '🟢',
+        armyLabel: this.boardTheme === 'wood' ? 'Nero' : 'Verde',
+        strokeColor: this.boardTheme === 'wood' ? '#a8a29e' : '#22c55e',
+      },
+    ];
+
+    for (const cfg of sideConfigs) {
+      const seat = this.seats?.getSeat(cfg.color) || {
+        shortName: cfg.armyLabel,
+        avatar: 'assets/avatars/guest.png',
+        badgeColor: cfg.strokeColor,
+      };
+      const isTurn = activeColor === cfg.color && !this.rules.isGameOver;
+      const isEliminated = this.rules.eliminatedColors.has(cfg.color);
+
+      const rad = (cfg.deg * Math.PI) / 180;
+      const cx = cfg.radius * Math.cos(rad);
+      const cy = cfg.radius * Math.sin(rad);
+
+      const clipId = `puffin-seat-clip-${cfg.color}`;
+      const clipPath = document.createElementNS(SVG_NS, 'clipPath');
+      clipPath.setAttribute('id', clipId);
+      const clipCircle = document.createElementNS(SVG_NS, 'circle');
+      clipCircle.setAttribute('cx', '-1.22');
+      clipCircle.setAttribute('cy', '0');
+      clipCircle.setAttribute('r', '0.42');
+      clipPath.appendChild(clipCircle);
+      this.defsEl.appendChild(clipPath);
+
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute(
+        'transform',
+        `translate(${cx.toFixed(3)}, ${cy.toFixed(3)}) rotate(${counterRot})`
+      );
+      if (isEliminated) {
+        g.setAttribute('opacity', '0.45');
+      }
+
+      // Active turn golden outer halo
+      if (isTurn) {
+        const halo = document.createElementNS(SVG_NS, 'rect');
+        halo.setAttribute('x', '-1.88');
+        halo.setAttribute('y', '-0.6');
+        halo.setAttribute('width', '3.76');
+        halo.setAttribute('height', '1.2');
+        halo.setAttribute('rx', '0.6');
+        halo.setAttribute('fill', 'rgba(250, 204, 21, 0.24)');
+        halo.setAttribute('stroke', '#facc15');
+        halo.setAttribute('stroke-width', '0.075');
+        g.appendChild(halo);
+      }
+
+      // Pill container
+      const pill = document.createElementNS(SVG_NS, 'rect');
+      pill.setAttribute('x', '-1.78');
+      pill.setAttribute('y', '-0.52');
+      pill.setAttribute('width', '3.56');
+      pill.setAttribute('height', '1.04');
+      pill.setAttribute('rx', '0.52');
+      pill.setAttribute('fill', isTurn ? '#1e293b' : '#0f172a');
+      pill.setAttribute('stroke', isTurn ? '#fde047' : cfg.strokeColor);
+      pill.setAttribute('stroke-width', isTurn ? '0.07' : '0.045');
+      g.appendChild(pill);
+
+      // PuffinLogin circular avatar image
+      const img = document.createElementNS(SVG_NS, 'image');
+      img.setAttribute('href', seat.avatar || 'assets/avatars/guest.png');
+      img.setAttribute('x', '-1.64');
+      img.setAttribute('y', '-0.42');
+      img.setAttribute('width', '0.84');
+      img.setAttribute('height', '0.84');
+      img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+      img.setAttribute('clip-path', `url(#${clipId})`);
+      g.appendChild(img);
+
+      // Ring around Puffin avatar
+      const avatarRing = document.createElementNS(SVG_NS, 'circle');
+      avatarRing.setAttribute('cx', '-1.22');
+      avatarRing.setAttribute('cy', '0');
+      avatarRing.setAttribute('r', '0.42');
+      avatarRing.setAttribute('fill', 'none');
+      avatarRing.setAttribute('stroke', isTurn ? '#fde047' : cfg.strokeColor);
+      avatarRing.setAttribute('stroke-width', isTurn ? '0.065' : '0.045');
+      g.appendChild(avatarRing);
+
+      // Top text: Player name (e.g. "Ale 🐉", "Seby 🐴", "Papino 🦖")
+      const nameTxt = document.createElementNS(SVG_NS, 'text');
+      nameTxt.setAttribute('x', '-0.64');
+      nameTxt.setAttribute('y', '-0.13');
+      nameTxt.setAttribute('text-anchor', 'start');
+      nameTxt.setAttribute('dominant-baseline', 'central');
+      nameTxt.setAttribute('font-size', '0.31');
+      nameTxt.setAttribute('font-weight', '800');
+      nameTxt.setAttribute('fill', isTurn ? '#fde047' : '#f8fafc');
+      nameTxt.textContent = `${cfg.dot} ${seat.shortName || cfg.armyLabel}`;
+      g.appendChild(nameTxt);
+
+      // Bottom text: Turn status ("👈 TOCCA A TE!" or army label)
+      const statusTxt = document.createElementNS(SVG_NS, 'text');
+      statusTxt.setAttribute('x', '-0.64');
+      statusTxt.setAttribute('y', '0.22');
+      statusTxt.setAttribute('text-anchor', 'start');
+      statusTxt.setAttribute('dominant-baseline', 'central');
+      statusTxt.setAttribute('font-size', '0.22');
+      statusTxt.setAttribute('font-weight', '800');
+      statusTxt.setAttribute(
+        'fill',
+        isEliminated ? '#f87171' : isTurn ? '#4ade80' : '#94a3b8'
+      );
+      statusTxt.textContent = isEliminated
+        ? '💀 Eliminato'
+        : isTurn
+          ? `👈 TOCCA A TE! (${cfg.armyLabel})`
+          : `Armata ${cfg.armyLabel}`;
+      g.appendChild(statusTxt);
+
+      this.seatsLayer.appendChild(g);
     }
   }
 }

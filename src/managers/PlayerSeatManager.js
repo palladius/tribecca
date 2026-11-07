@@ -167,10 +167,29 @@ export class PlayerSeatManager {
       this.setSeatProfile('green', 'seby');
       this.autoPlayPaused = false;
     } else if (presetId === '0v3') {
-      this.setSeatProfile('white', 'cpu');
-      this.setSeatProfile('red', 'cpu');
-      this.setSeatProfile('green', 'cpu');
+      this.seats.white = {
+        ...PUFFIN_SEAT_PROFILES.riccardo,
+        profileId: 'cpu',
+        kind: 'cpu',
+        shortName: 'Papino 🦖 (🤖)',
+      };
+      this.seats.red = {
+        ...PUFFIN_SEAT_PROFILES.ale,
+        profileId: 'cpu',
+        kind: 'cpu',
+        shortName: 'Ale 🐉 (🤖)',
+      };
+      this.seats.green = {
+        ...PUFFIN_SEAT_PROFILES.seby,
+        profileId: 'cpu',
+        kind: 'cpu',
+        shortName: 'Seby 🐴 (🤖)',
+      };
       this.autoPlayPaused = false;
+      this.bus?.emit({
+        type: 'SEAT_CONFIG_CHANGED',
+        seats: { ...this.seats },
+      });
     }
     this._scheduleAiIfNeeded();
   }

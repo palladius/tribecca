@@ -71,7 +71,7 @@ function initTriBeccaApp() {
     }
   };
 
-  const view2D = new Board2DView(view2dContainer, topology, rules, bus, handleSquareClick);
+  const view2D = new Board2DView(view2dContainer, topology, rules, bus, handleSquareClick, seats);
   const view3D = new Board3DView(view3dContainer, topology, rules, seats, bus, handleSquareClick);
 
   // View Mode Switcher ('3d' | '2d' | 'split')
@@ -225,15 +225,45 @@ function initTriBeccaApp() {
         ? 'Nero'
         : SECTOR_META[activeColor].labelIt;
 
+    const borderHex =
+      activeColor === 'white'
+        ? '#f8fafc'
+        : activeColor === 'red'
+          ? '#ef4444'
+          : view3D.boardTheme === 'wood'
+            ? '#a8a29e'
+            : '#22c55e';
+    const avatarSrc = seat?.avatar || 'assets/avatars/guest.png';
+
     if (turnBanner) {
       if (rules.isGameOver) {
-        turnBanner.innerHTML = `🏁 <strong>${rules.gameOverReason}</strong>`;
+        const winSeat = rules.winnerColor ? seats.getSeat(rules.winnerColor) : null;
+        const winAv = winSeat?.avatar || avatarSrc;
+        turnBanner.innerHTML = `<img src="${winAv}" alt="Vincitore" class="turn-pill-avatar" /> <span>🏁 <strong>${rules.gameOverReason}</strong></span>`;
       } else if (rules.editorMode) {
         turnBanner.innerHTML = `🛠️ <strong>Modalità Specchio Scacchiera Vera:</strong> Clicca qualsiasi pezzo per vedere i raggi o spostarlo liberamente`;
       } else {
         const inCheck = rules.isKingInCheck(activeColor);
-        turnBanner.innerHTML = `${colorDot} Turno: <strong>${colorLabel}</strong> (${seat?.shortName || ''}) ${inCheck ? '<span class="check-badge">⚠️ SOTTO SCACCO!</span>' : ''}`;
+        turnBanner.innerHTML = `<img src="${avatarSrc}" alt="${seat?.shortName || colorLabel}" class="turn-pill-avatar" style="border-color:${borderHex}" /> <span>Tocca a: <strong>${seat?.shortName || colorLabel}</strong> (${colorDot} ${colorLabel}) ${inCheck ? '<span class="check-badge">⚠️ SOTTO SCACCO!</span>' : ''}</span>`;
       }
+    }
+
+    const stageHeroAv = document.getElementById('stage-turn-avatar');
+    const stageHeroTitle = document.getElementById('stage-turn-title');
+    const stageHeroSub = document.getElementById('stage-turn-sub');
+    if (stageHeroAv) {
+      stageHeroAv.src = avatarSrc;
+      stageHeroAv.style.borderColor = borderHex;
+    }
+    if (stageHeroTitle) {
+      stageHeroTitle.textContent = rules.isGameOver
+        ? `🏆 Vincitore: ${ (rules.winnerColor ? seats.getSeat(rules.winnerColor)?.shortName : 'Patta') || '' }`
+        : `Tocca a: ${seat?.shortName || colorLabel}`;
+    }
+    if (stageHeroSub) {
+      stageHeroSub.textContent = rules.isGameOver
+        ? rules.gameOverReason
+        : `${colorDot} Armata ${colorLabel}`;
     }
 
     // Highlight active seat card
