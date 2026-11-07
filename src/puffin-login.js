@@ -58,6 +58,7 @@ export const PUFFIN_PROFILES = Object.freeze([
     colorHex: '#FACC15',
     glowHex: 'rgba(250, 204, 21, 0.45)',
     avatar: 'assets/avatars/riccardo.png',
+    video: 'assets/avatars/riccardo.mp4',
     faceFocusY: '26%',
   },
   {
@@ -76,6 +77,7 @@ export const PUFFIN_PROFILES = Object.freeze([
     colorHex: '#A855F7',
     glowHex: 'rgba(168, 85, 247, 0.45)',
     avatar: 'assets/avatars/kate.png',
+    video: 'assets/avatars/kate.mp4',
     faceFocusY: '25%',
   },
   {
@@ -94,6 +96,7 @@ export const PUFFIN_PROFILES = Object.freeze([
     colorHex: '#EF4444',
     glowHex: 'rgba(239, 68, 68, 0.45)',
     avatar: 'assets/avatars/ale.png',
+    video: 'assets/avatars/ale.mp4',
     faceFocusY: '24%',
   },
   {
@@ -112,6 +115,7 @@ export const PUFFIN_PROFILES = Object.freeze([
     colorHex: '#3B82F6',
     glowHex: 'rgba(59, 130, 246, 0.45)',
     avatar: 'assets/avatars/seby.png',
+    video: 'assets/avatars/seby.mp4',
     faceFocusY: '24%',
   },
   {
@@ -130,6 +134,7 @@ export const PUFFIN_PROFILES = Object.freeze([
     colorHex: '#EC4899',
     glowHex: 'rgba(236, 72, 153, 0.45)',
     avatar: 'assets/avatars/lucilla.png',
+    video: 'assets/avatars/lucilla.mp4',
     faceFocusY: '26%',
   },
   {
@@ -148,7 +153,27 @@ export const PUFFIN_PROFILES = Object.freeze([
     colorHex: '#9CA3AF',
     glowHex: 'rgba(156, 163, 175, 0.40)',
     avatar: 'assets/avatars/guest.png',
+    video: 'assets/avatars/guest.mp4',
     faceFocusY: '25%',
+  },
+  {
+    id: 'saga',
+    aliases: ['gemini', 'uat', 'bot', 'agy', 'saga-gemini'],
+    displayName: 'bot (Saga di Gemini UAT)',
+    displayNameEn: 'bot (Gemini Saga UAT)',
+    shortName: 'bot',
+    rpgClass: 'Gold Saint Bot • UAT',
+    emoji: '♊',
+    role: 'bot',
+    authType: 'password',
+    secretHash: '5ac3918812d0e665b215336daca02dea39b9908ae3169b2cc2e7774c50706893',
+    email: 'palladiusbonton+saga-uat@gmail.com',
+    colorName: 'Ciano Cosmo',
+    colorHex: '#22D3EE',
+    glowHex: 'rgba(34, 211, 238, 0.45)',
+    avatar: 'assets/avatars/saga.png',
+    video: 'assets/avatars/saga.mp4',
+    faceFocusY: '26%',
   },
 ]);
 
@@ -221,6 +246,7 @@ export const I18N = Object.freeze({
 
 export const STORAGE_KEYS = Object.freeze({
   AUTH: 'puffin_auth_v2',
+  LOGINS: 'puffin_logins_v1',
   LANG: 'puffin_lang_v1',
   SCORES: 'puffin_scores_v2',
   DELETED_SCORES: 'puffin_deleted_scores_v1',
@@ -337,6 +363,66 @@ export const DEFAULT_DUMMY_SCORES = Object.freeze([
       schema_hash: 'pipe_8x8_f00d42',
       water_leaks: 0,
       pipes_rotated: 29,
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_10_ricc_tubature',
+    game_id: 'tubature',
+    player_id: 'riccardo',
+    score: 4450,
+    started_at: '2026-11-07T15:10:00Z',
+    ended_at: '2026-11-07T15:12:30Z',
+    duration_sec: 150,
+    hostname: 'pupurabbux.tailnet.lan',
+    ip_address: '100.94.27.10',
+    device: 'Linux RTX 5080 (Chrome)',
+    summary_text: 'Dad Riccardo connected all 64 dungeon conduits on Hard (8x8) in 38 moves!',
+    extra: {
+      level: 7,
+      difficulty: 'Hard',
+      grid: '8x8',
+      moves: 38,
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_11_ale_tubature',
+    game_id: 'tubature',
+    player_id: 'ale',
+    score: 3650,
+    started_at: '2026-11-07T15:18:00Z',
+    ended_at: '2026-11-07T15:20:10Z',
+    duration_sec: 130,
+    hostname: 'ipad-ale.lan',
+    ip_address: '192.168.1.44',
+    device: 'iPad Air',
+    summary_text: 'Ale unlocked 3 Dragon Gems ampolle on Medium (6x6) in 22 moves!',
+    extra: {
+      level: 4,
+      difficulty: 'Medium',
+      grid: '6x6',
+      moves: 22,
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_12_seby_tubature',
+    game_id: 'tubature',
+    player_id: 'seby',
+    score: 2950,
+    started_at: '2026-11-07T15:22:00Z',
+    ended_at: '2026-11-07T15:23:45Z',
+    duration_sec: 105,
+    hostname: 'ipad-seby.lan',
+    ip_address: '192.168.1.45',
+    device: 'iPad Mini',
+    summary_text: 'Seby flooded the 5x5 Emerald Dragon dungeon in 14 moves!',
+    extra: {
+      level: 2,
+      difficulty: 'Easy',
+      grid: '5x5',
+      moves: 14,
     },
     is_dummy_seed: true,
   },
@@ -490,8 +576,14 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
 
   const hostname = String(raw.hostname ?? fallbackTelemetry.hostname ?? '').trim();
   const ipAddress =
-    String(raw.ip_address ?? raw.ipAddress ?? fallbackTelemetry.ipAddress ?? '').trim() ||
-    '127.0.0.1';
+    String(
+      raw.source_ip ??
+        raw.ip_address ??
+        raw.ipAddress ??
+        fallbackTelemetry.source_ip ??
+        fallbackTelemetry.ipAddress ??
+        ''
+    ).trim() || '127.0.0.1';
   const device = String(raw.device ?? fallbackTelemetry.device ?? 'Browser').trim();
 
   const summaryText =
@@ -508,6 +600,7 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
     player_id: resolvedPlayerId,
     score,
     hostname,
+    source_ip: ipAddress,
     ip_address: ipAddress,
     device,
     summary_text: summaryText,
@@ -527,6 +620,57 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
     ipAddress,
     summaryText,
     metadata: extra,
+  };
+}
+
+export function validateAndNormalizeLoginPayload(raw = {}, fallbackTelemetry = {}) {
+  const appId =
+    String(raw.app_id || raw.appId || raw.game_id || raw.gameId || fallbackTelemetry.appId || '').trim() ||
+    'puffin-login';
+  const resolvedPlayerId = normalizeProfileId(
+    raw.player_id ?? raw.playerId ?? raw.userId ?? raw.id ?? 'guest',
+    false
+  );
+  const profile = getProfileById(resolvedPlayerId);
+
+  const nowIso = new Date().toISOString();
+  const loggedAtRaw = raw.logged_at || raw.loggedAt || raw.timestamp || nowIso;
+  const loggedMs = Number.isNaN(Date.parse(loggedAtRaw)) ? Date.now() : Date.parse(loggedAtRaw);
+  const loggedAt = new Date(loggedMs).toISOString();
+
+  const hostname = String(raw.hostname ?? fallbackTelemetry.hostname ?? '').trim();
+  const ipAddress =
+    String(
+      raw.source_ip ??
+        raw.ip_address ??
+        raw.ipAddress ??
+        fallbackTelemetry.source_ip ??
+        fallbackTelemetry.ipAddress ??
+        ''
+    ).trim() || '127.0.0.1';
+  const device = String(raw.device ?? fallbackTelemetry.device ?? 'Browser').trim();
+  const authMethod = String(raw.auth_method || raw.authMethod || profile.authType || 'none').trim();
+
+  return {
+    id: raw.id || `lgn_${loggedMs}_${resolvedPlayerId}`,
+    player_id: resolvedPlayerId,
+    userId: resolvedPlayerId,
+    app_id: appId,
+    game_id: appId,
+    appId,
+    logged_at: loggedAt,
+    loggedAt,
+    source_ip: ipAddress,
+    ip_address: ipAddress,
+    ipAddress,
+    hostname,
+    device,
+    auth_method: authMethod,
+    displayName: profile.displayName,
+    shortName: profile.shortName,
+    role: profile.role,
+    colorHex: profile.colorHex,
+    avatar: profile.avatar,
   };
 }
 
@@ -839,13 +983,13 @@ const COMPONENT_CSS = `
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
-/* 2. COMPACT FAMILY SELECTOR DIALOG (max-width: 440px) */
+/* 2. COMPACT FAMILY SELECTOR DIALOG (2 rows x 4 cols + 3x3 Hero Spotlight Stage) */
 dialog {
   border: none;
   padding: 0;
   background: transparent;
   color: var(--puffin-text);
-  max-width: min(94vw, 440px);
+  max-width: min(96vw, 520px);
   width: 100%;
   margin: auto;
 }
@@ -966,19 +1110,27 @@ dialog::backdrop {
   scale: 1.08;
 }
 
-/* COMPACT 6-PERSON FAMILY SELECTOR STRIP */
+/* 2-ROW x 4-COL FAMILY + BOT SELECTOR GRID:
+   Row 1: Riccardo | Kate   | Ale   | Seby
+   Row 2: Nonna    | [empty]| Guest | Saga (UAT Bot) */
 .profiles-strip {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.32rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.48rem;
   padding: 0.25rem 0;
+}
+
+.profile-grid-spacer {
+  pointer-events: none;
+  visibility: hidden;
+  min-height: 1px;
 }
 
 .profile-card {
   background: var(--puffin-card-bg);
   border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.95rem;
-  padding: 0.38rem 0.2rem 0.42rem;
+  padding: 0.45rem 0.28rem 0.48rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -995,14 +1147,22 @@ dialog::backdrop {
 }
 
 .profile-card:hover:not([disabled]),
-.profile-card:focus-visible:not([disabled]),
-.profile-card.selected {
-  scale: 1.06;
+.profile-card:focus-visible:not([disabled]) {
+  scale: 1.22;
   border-color: var(--card-color, #FACC15);
-  box-shadow: 0 6px 18px var(--card-glow, rgba(250, 204, 21, 0.35));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.72), 0 0 18px var(--card-glow, rgba(250, 204, 21, 0.45));
   background: #252b4d;
   outline: none;
-  z-index: 2;
+  z-index: 25;
+}
+
+.profile-card.selected {
+  scale: 1.08;
+  border-color: var(--card-color, #FACC15);
+  box-shadow: 0 6px 18px var(--card-glow, rgba(250, 204, 21, 0.45));
+  background: #252b4d;
+  outline: none;
+  z-index: 5;
 }
 
 .profile-card.guest-highlight {
@@ -1017,13 +1177,13 @@ dialog::backdrop {
 }
 
 .card-avatar-frame {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   border-radius: var(--puffin-radius);
   overflow: hidden;
   border: 2.5px solid var(--card-color, #FACC15);
   background: #0d0f1d;
-  margin-bottom: 0.28rem;
+  margin-bottom: 0.3rem;
   position: relative;
   translate: 0px;
   rotate: -2deg;
@@ -1054,6 +1214,22 @@ dialog::backdrop {
               object-position 0.34s ease;
 }
 
+.card-avatar-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.profile-card.video-playing .card-avatar-video {
+  opacity: 1;
+}
+
 .profile-card:hover:not([disabled]) .card-avatar-img,
 .profile-card:focus-visible:not([disabled]) .card-avatar-img,
 .profile-card.selected .card-avatar-img {
@@ -1062,11 +1238,80 @@ dialog::backdrop {
   scale: 1.0;
 }
 
+/* GUEST / ANONYMOUS: ALWAYS BLACK & WHITE (even on hover or when active!) */
+.profile-card[data-profile-id="guest"] .card-avatar-frame,
+.profile-card[data-profile-id="guest"] .card-avatar-img,
+.profile-card[data-profile-id="guest"] .card-avatar-video,
+.puffin-badge-btn[data-user-id="guest"] .badge-avatar-wrap,
+.puffin-badge-btn[data-user-id="guest"] .badge-avatar-img,
+.drawer-hero-frame[data-hero-id="guest"] {
+  filter: grayscale(100%) contrast(1.12);
+}
+
+.profile-card[data-profile-id="guest"] .card-name {
+  color: #cbd5e1;
+}
+
+/* UAT BOT (bot / saga): ROBOT <tt> MONOSPACE FONT, NON-SELECTABLE BY HUMANS + HOVER TOOLTIP */
+.profile-card[data-profile-id="saga"] {
+  border-style: dashed;
+  border-color: rgba(34, 211, 238, 0.45);
+  background: linear-gradient(180deg, rgba(8, 28, 44, 0.92) 0%, rgba(12, 18, 34, 0.96) 100%);
+  cursor: not-allowed;
+}
+
+.profile-card[data-profile-id="saga"]:hover,
+.profile-card[data-profile-id="saga"]:focus-visible,
+.profile-card[data-profile-id="saga"].bot-tooltip-flash {
+  z-index: 60;
+}
+
+.bot-only-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  background: #091526;
+  color: #67e8f9;
+  border: 1.5px solid #22d3ee;
+  border-radius: 0.6rem;
+  padding: 0.32rem 0.55rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85), 0 0 12px rgba(34, 211, 238, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  translate: 0px 4px;
+  transition: opacity 0.18s ease, translate 0.18s ease;
+  z-index: 60;
+}
+
+.profile-card[data-profile-id="saga"]:hover .bot-only-tooltip,
+.profile-card[data-profile-id="saga"]:focus-visible .bot-only-tooltip,
+.profile-card[data-profile-id="saga"].bot-tooltip-flash .bot-only-tooltip {
+  opacity: 1;
+  translate: 0px 0px;
+}
+
+.robot-tt {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #22d3ee;
+  background: rgba(6, 182, 212, 0.16);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 4px;
+  padding: 0.04rem 0.32rem;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.55);
+}
+
 .card-name {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1093,23 +1338,101 @@ dialog::backdrop {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
-/* 3. SUPER CUTIE KIDS PIN PAD (X X X X) & ADULT AUTH DRAWER */
+/* 3. 3x3 HERO SPOTLIGHT STAGE (174x174px = 3x of 58px!) + AUTH DRAWER */
 .auth-drawer {
-  margin-top: 0.65rem;
-  padding: 0.8rem 0.85rem;
-  border-radius: 1.1rem;
-  background: radial-gradient(circle at top, rgba(35, 42, 78, 0.95) 0%, rgba(15, 18, 34, 0.98) 100%);
+  margin-top: 0.7rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 1.15rem;
+  background: radial-gradient(circle at top left, rgba(35, 42, 78, 0.96) 0%, rgba(13, 16, 32, 0.99) 100%);
   border: 2.5px solid var(--drawer-color, #FACC15);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.55rem;
   position: relative;
 }
 
 .auth-drawer[hidden] {
   display: none;
+}
+
+.drawer-stage-row {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  width: 100%;
+}
+
+@media (max-width: 460px) {
+  .drawer-stage-row {
+    flex-direction: column;
+  }
+}
+
+.drawer-hero-spotlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.drawer-hero-frame {
+  width: 174px;
+  height: 174px;
+  border-radius: 1.35rem;
+  overflow: hidden;
+  border: 3px solid var(--drawer-color, #FACC15);
+  background: #090b16;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 22px var(--drawer-glow, rgba(250, 204, 21, 0.35));
+  position: relative;
+  animation: heroPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes heroPopIn {
+  from {
+    scale: 0.72;
+    opacity: 0.4;
+  }
+  to {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+.drawer-hero-img,
+.drawer-hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+.drawer-hero-video {
+  position: absolute;
+  inset: 0;
+}
+
+.drawer-hero-class {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--drawer-color, #fde047);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 0.14rem 0.55rem;
+  white-space: nowrap;
+}
+
+.drawer-auth-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .auth-drawer.jammed {
@@ -1424,10 +1747,15 @@ if (template) {
         <div class="profiles-strip" role="listbox" aria-label="Carlesso Family Profiles"></div>
 
         <div class="auth-drawer" hidden>
-          <div class="drawer-header"></div>
-          <div class="drawer-body"></div>
-          <div class="feedback-msg" role="status" aria-live="polite"></div>
-          <button type="button" class="forgot-link" hidden></button>
+          <div class="drawer-stage-row">
+            <div class="drawer-hero-spotlight"></div>
+            <div class="drawer-auth-col">
+              <div class="drawer-header"></div>
+              <div class="drawer-body"></div>
+              <div class="feedback-msg" role="status" aria-live="polite"></div>
+              <button type="button" class="forgot-link" hidden></button>
+            </div>
+          </div>
         </div>
       </div>
     </dialog>
@@ -1484,6 +1812,7 @@ export class PuffinLoginElement extends BaseElement {
     this.$grid = this.shadowRoot.querySelector('.profiles-strip');
     this.$pills = this.shadowRoot.querySelector('.policy-pills');
     this.$drawer = this.shadowRoot.querySelector('.auth-drawer');
+    this.$drawerSpotlight = this.shadowRoot.querySelector('.drawer-hero-spotlight');
     this.$drawerHeader = this.shadowRoot.querySelector('.drawer-header');
     this.$drawerBody = this.shadowRoot.querySelector('.drawer-body');
     this.$feedback = this.shadowRoot.querySelector('.feedback-msg');
@@ -1763,6 +2092,7 @@ export class PuffinLoginElement extends BaseElement {
     const tr = this.t();
     if (!user) {
       // Unauthenticated (identity === NULL)
+      this.$badgeBtn.dataset.userId = 'null';
       this.$badgeBtn.style.setProperty('--active-color', '#F97316');
       this.$badgeBtn.style.setProperty('--active-glow', 'rgba(249, 115, 22, 0.35)');
       this.$badgeImg.hidden = true;
@@ -1771,13 +2101,51 @@ export class PuffinLoginElement extends BaseElement {
       return;
     }
     // Ultra-minimalist badge: ONLY Icon + Name (no emoji, no subtitles!)
+    this.$badgeBtn.dataset.userId = user.id;
     this.$badgeBtn.style.setProperty('--active-color', user.colorHex);
     this.$badgeBtn.style.setProperty('--active-glow', user.glowHex);
     this.$badgeImg.src = `${this.config.assetBaseUrl}/${user.avatar}`.replace(/\/\//g, '/');
     this.$badgeImg.alt = user.shortName;
     this.$badgeImg.hidden = false;
     this.$badgeLock.hidden = true;
-    this.$badgeName.textContent = user.shortName;
+    if (user.role === 'bot') {
+      this.$badgeName.innerHTML = `<tt class="robot-tt">${user.shortName}</tt>`;
+    } else {
+      this.$badgeName.textContent = user.shortName;
+    }
+  }
+
+  _startCardVideo(card) {
+    const vid = card.querySelector('.card-avatar-video');
+    if (!vid || vid.dataset.failed === '1') return;
+    if (!vid.src && vid.dataset.src) {
+      vid.src = vid.dataset.src;
+      vid.addEventListener(
+        'error',
+        () => {
+          vid.dataset.failed = '1';
+          card.classList.remove('video-playing');
+        },
+        { once: true }
+      );
+      vid.addEventListener('playing', () => {
+        card.classList.add('video-playing');
+      });
+    }
+    const p = vid.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {});
+    }
+  }
+
+  _stopCardVideo(card, keepIfSelected = true) {
+    if (keepIfSelected && card.classList.contains('selected')) return;
+    const vid = card.querySelector('.card-avatar-video');
+    if (!vid) return;
+    card.classList.remove('video-playing');
+    try {
+      vid.pause();
+    } catch {}
   }
 
   renderModalContent() {
@@ -1811,6 +2179,7 @@ export class PuffinLoginElement extends BaseElement {
 
       const card = document.createElement('button');
       card.type = 'button';
+      card.dataset.profileId = p.id;
       card.className = `profile-card ${isSelected ? 'selected' : ''} ${
         isGuestHighlighted ? 'guest-highlight' : ''
       }`;
@@ -1823,25 +2192,72 @@ export class PuffinLoginElement extends BaseElement {
       }
 
       const imgSrc = `${this.config.assetBaseUrl}/${p.avatar}`.replace(/\/\//g, '/');
+      const videoSrc = p.video
+        ? `${this.config.assetBaseUrl}/${p.video}`.replace(/\/\//g, '/')
+        : '';
+      const isBot = p.role === 'bot';
+      const nameHtml = isBot ? `<tt class="robot-tt">${p.shortName}</tt>` : p.shortName;
+      const botTooltipHtml = isBot
+        ? `<span class="bot-only-tooltip">🤖 This is for bots not for you!</span>`
+        : '';
+      if (isBot) {
+        card.title = 'This is for bots not for you!';
+      }
+
       card.innerHTML = `
         ${lock.jammed ? '<span class="jam-badge" title="Jammed!">!</span>' : ''}
+        ${botTooltipHtml}
         <div class="card-avatar-frame">
           <img class="card-avatar-img" src="${imgSrc}" alt="${p.shortName}" loading="lazy" />
+          ${
+            videoSrc
+              ? `<video class="card-avatar-video" data-src="${videoSrc}" muted loop playsinline preload="none"></video>`
+              : ''
+          }
         </div>
-        <div class="card-name">${p.shortName}</div>
+        <div class="card-name">${nameHtml}</div>
       `;
 
-      if (policy.allowed) {
+      if (isBot) {
+        card.addEventListener('mouseenter', () => this._startCardVideo(card));
+        card.addEventListener('focus', () => this._startCardVideo(card));
+        card.addEventListener('mouseleave', () => this._stopCardVideo(card, false));
+        card.addEventListener('blur', () => this._stopCardVideo(card, false));
+        card.addEventListener('click', (e) => {
+          e.preventDefault();
+          playTone(220, 80, 'square');
+          setTimeout(() => playTone(165, 110, 'square'), 90);
+          card.classList.add('bot-tooltip-flash');
+          setTimeout(() => card.classList.remove('bot-tooltip-flash'), 1800);
+        });
+      } else if (policy.allowed) {
         card.addEventListener('click', () => this.selectCandidate(p));
+        card.addEventListener('mouseenter', () => this._startCardVideo(card));
+        card.addEventListener('focus', () => this._startCardVideo(card));
+        card.addEventListener('mouseleave', () => this._stopCardVideo(card, true));
+        card.addEventListener('blur', () => this._stopCardVideo(card, true));
       }
       this.$grid.appendChild(card);
+
+      if (isSelected && policy.allowed && !isBot) {
+        setTimeout(() => this._startCardVideo(card), 50);
+      }
+
+      // Row 1: Riccardo, Kate, Ale, Seby (4 cols)
+      // Row 2: Nonna Lucilla (col 1), [empty spacer] (col 2), Guest (col 3), bot (col 4)
+      if (p.id === 'lucilla') {
+        const spacer = document.createElement('div');
+        spacer.className = 'profile-grid-spacer';
+        spacer.setAttribute('aria-hidden', 'true');
+        this.$grid.appendChild(spacer);
+      }
     }
   }
 
   openModal(preselectUserId = null) {
     if (preselectUserId) {
       const found = PUFFIN_PROFILES.find((p) => p.id === normalizeProfileId(preselectUserId));
-      if (found && this.evaluatePolicy(found).allowed) {
+      if (found && found.role !== 'bot' && this.evaluatePolicy(found).allowed) {
         this.selectCandidate(found);
       }
     } else {
@@ -1855,7 +2271,8 @@ export class PuffinLoginElement extends BaseElement {
     }
   }
 
-  selectCandidate(profile) {
+  selectCandidate(profile, instantGuest = false) {
+    if (!profile || profile.role === 'bot') return;
     if (this._jamTimer) {
       clearInterval(this._jamTimer);
       this._jamTimer = null;
@@ -1868,7 +2285,7 @@ export class PuffinLoginElement extends BaseElement {
     this.$feedback.className = 'feedback-msg';
     this.renderModalContent();
 
-    if (profile.authType === 'none') {
+    if (profile.authType === 'none' && instantGuest) {
       playTone(660, 90, 'triangle');
       this.saveActiveSession(profile.id, true);
       this.$dialog.close();
@@ -1879,6 +2296,53 @@ export class PuffinLoginElement extends BaseElement {
     this.$drawer.hidden = false;
     this.$drawer.classList.toggle('jammed', lock.jammed);
     this.$drawer.style.setProperty('--drawer-color', profile.colorHex);
+    this.$drawer.style.setProperty('--drawer-glow', profile.glowHex);
+
+    // Populate the 3x3 (174x174px) Hero Spotlight Stage on the left of .auth-drawer!
+    const imgSrc = `${this.config.assetBaseUrl}/${profile.avatar}`.replace(/\/\//g, '/');
+    const videoSrc = profile.video
+      ? `${this.config.assetBaseUrl}/${profile.video}`.replace(/\/\//g, '/')
+      : '';
+    this.$drawerSpotlight.innerHTML = `
+      <div class="drawer-hero-frame" data-hero-id="${profile.id}">
+        <img class="drawer-hero-img" src="${imgSrc}" alt="${profile.shortName}" />
+        ${
+          videoSrc
+            ? `<video class="drawer-hero-video" src="${videoSrc}" autoplay muted loop playsinline></video>`
+            : ''
+        }
+      </div>
+      <span class="drawer-hero-class">${profile.emoji || ''} ${profile.rpgClass || ''}</span>
+    `;
+    const $spotVid = this.$drawerSpotlight.querySelector('.drawer-hero-video');
+    if ($spotVid) {
+      $spotVid.addEventListener('error', () => $spotVid.remove(), { once: true });
+      const playPromise = $spotVid.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+    }
+
+    if (profile.authType === 'none') {
+      this.$drawerHeader.innerHTML = `
+        <span><strong>${profile.shortName}</strong></span>
+        <span class="attempts-pill">1-Click</span>
+      `;
+      this.$forgotBtn.hidden = true;
+      this.$drawerBody.innerHTML = `
+        <button type="button" class="action-btn" id="confirm-guest-btn" style="width:100%;padding:0.65rem 1rem;font-size:0.95rem;">
+          🐧 ${tr.playAsGuestBtn}
+        </button>
+      `;
+      const $gBtn = this.$drawerBody.querySelector('#confirm-guest-btn');
+      setTimeout(() => $gBtn?.focus(), 30);
+      $gBtn?.addEventListener('click', () => {
+        playTone(660, 90, 'triangle');
+        this.saveActiveSession(profile.id, true);
+        this.$dialog.close();
+      });
+      return;
+    }
 
     const attemptsLeft = Math.max(0, MAX_FAILED_ATTEMPTS - lock.attempts);
     const pillClass = lock.jammed || lock.attempts >= 2 ? 'attempts-pill danger' : 'attempts-pill';
@@ -2178,18 +2642,32 @@ const LEADERBOARD_CSS = `
 .hof-row {
   background: rgba(20, 24, 46, 0.9);
   border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.85rem;
+  border-radius: 0.95rem;
   padding: 0.45rem 0.85rem;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, padding 0.22s ease;
   cursor: default;
 }
 
 .hof-row:hover,
-.hof-row:focus-within {
+.hof-row:focus-within,
+.hof-row.is-expanded {
   border-color: var(--row-color, #FACC15);
-  background: rgba(30, 36, 68, 0.96);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  background: rgba(30, 36, 68, 0.97);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.48);
+  padding: 0.65rem 0.9rem;
+  align-items: stretch;
   outline: none;
+}
+
+.hof-content-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .hof-main {
@@ -2202,13 +2680,13 @@ const LEADERBOARD_CSS = `
 .hof-left {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.55rem;
   min-width: 0;
 }
 
 .hof-rank {
-  width: 1.5rem;
-  font-size: 0.82rem;
+  min-width: 1.5rem;
+  font-size: 0.84rem;
   font-weight: 800;
   color: #94a3b8;
   font-variant-numeric: tabular-nums;
@@ -2221,13 +2699,28 @@ const LEADERBOARD_CSS = `
 .hof-row[data-rank="3"] .hof-rank { color: #fb923c; font-weight: 900; }
 
 .lb-avatar-wrap {
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 26%;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 24%;
   overflow: hidden;
   border: 2px solid var(--row-color, #FACC15);
   background: #0b0d19;
   flex-shrink: 0;
+  position: relative;
+  transition: width 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              height 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-radius 0.28s ease,
+              box-shadow 0.28s ease;
+}
+
+.hof-row:hover .lb-avatar-wrap,
+.hof-row:focus-within .lb-avatar-wrap,
+.hof-row.is-expanded .lb-avatar-wrap {
+  width: 6.75rem;
+  height: 6.75rem;
+  border-radius: 1rem;
+  border-width: 2.5px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
 }
 
 .lb-avatar-img {
@@ -2243,49 +2736,103 @@ const LEADERBOARD_CSS = `
               object-position 0.3s ease;
 }
 
+.lb-avatar-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.hof-row.video-playing .lb-avatar-video {
+  opacity: 1;
+}
+
 .hof-row:hover .lb-avatar-img,
-.hof-row:focus-within .lb-avatar-img {
+.hof-row:focus-within .lb-avatar-img,
+.hof-row.is-expanded .lb-avatar-img {
   object-position: center 50%;
   translate: 0px 0%;
   scale: 1.0;
 }
 
 .hof-name {
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   font-weight: 800;
   color: #f8fafc;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.hof-role-pill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--row-color, #fde047);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.06rem 0.45rem;
+  margin-right: 0.35rem;
+  white-space: nowrap;
+}
+
+.hof-row[data-player-id="guest"] .lb-avatar-wrap,
+.hof-row[data-player-id="null"] .lb-avatar-wrap {
+  filter: grayscale(100%) contrast(1.12);
+}
+
+.robot-tt {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #22d3ee;
+  background: rgba(6, 182, 212, 0.16);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 4px;
+  padding: 0.04rem 0.3rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.55);
 }
 
 .hof-score {
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: var(--row-color, #fde047);
   flex-shrink: 0;
 }
 
-/* HOVER-ONLY DETAILS (completely hidden at rest!) */
+/* HOVER-ONLY DETAILS (flows in the right column beside the full-height left avatar!) */
 .hof-hover-details {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: #94a3b8;
-  line-height: 1.35;
-  transition: max-height 0.22s ease, opacity 0.2s ease, margin-top 0.2s ease;
+  line-height: 1.4;
+  transition: max-height 0.25s ease, opacity 0.22s ease, margin-top 0.22s ease;
   margin-top: 0;
 }
 
 .hof-row:hover .hof-hover-details,
-.hof-row:focus-within .hof-hover-details {
-  max-height: 3.5rem;
+.hof-row:focus-within .hof-hover-details,
+.hof-row.is-expanded .hof-hover-details {
+  max-height: 6.5rem;
   opacity: 1;
-  margin-top: 0.38rem;
-  padding-top: 0.35rem;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  margin-top: 0.42rem;
+  padding-top: 0.38rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.14);
+}
+
+.hof-summary-line {
+  color: #e2e8f0;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
 }
 
 .hof-hover-details code {
@@ -2376,7 +2923,314 @@ const LEADERBOARD_CSS = `
   background: #b91c1c;
   transform: scale(1.05);
 }
+
+.hof-game-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  background: rgba(250, 204, 21, 0.14);
+  color: #fde047;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  border-radius: 0.38rem;
+  padding: 0.06rem 0.4rem;
+  font-family: monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.hof-game-link:hover {
+  background: rgba(250, 204, 21, 0.28);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* GeoCities-style Puffin Login Ring Footer inside Hall of Fame */
+.hof-ring-footer {
+  margin-top: 0.45rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, rgba(45, 22, 8, 0.92) 0%, rgba(18, 14, 36, 0.96) 50%, rgba(45, 22, 8, 0.92) 100%);
+  border: 1.5px solid rgba(251, 146, 60, 0.55);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), inset 0 0 18px rgba(251, 146, 60, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.48rem;
+}
+
+.hof-ring-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 520px) {
+  .hof-ring-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+.hof-ring-hub-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #fde047;
+  font-weight: 900;
+  font-size: 0.78rem;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.35) 0%, rgba(124, 45, 18, 0.45) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.65);
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hof-ring-hub-link:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
+  color: #fff;
+}
+
+.hof-ring-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fdba74;
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  border-radius: 0.55rem;
+  padding: 0.24rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.hof-ring-step-btn:hover {
+  background: rgba(234, 88, 12, 0.28);
+  color: #fff;
+  border-color: #facc15;
+}
+
+.hof-ring-pills {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.hof-ring-app-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.hof-ring-app-pill.is-live {
+  border-color: rgba(52, 211, 153, 0.55);
+  color: #a7f3d0;
+}
+
+.hof-ring-app-pill.is-upcoming {
+  border-style: dashed;
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fde68a;
+}
+
+.hof-ring-app-pill:hover {
+  transform: translateY(-1px);
+  border-color: #facc15;
+  color: #fff;
+}
 `;
+
+export const VETRINA_GAMES_JSON_URL = 'https://palladius.github.io/vetrina/data/games.json';
+export const VETRINA_RING_HASH_URL = 'https://palladius.github.io/vetrina/#puffin-ring';
+export const DEFAULT_RING_HUB_URL = 'https://puffin-login-932724269481.europe-west1.run.app/ring.html';
+
+export const PUFFIN_LOGIN_RING_DEFAULT = [
+  {
+    id: 'demo-snake',
+    puffin_game_id: 'puffin-snake',
+    title: '🐍🐧 Puffin Snake',
+    shortTitle: 'Puffin Snake',
+    emoji: '🐍',
+    play_url: 'https://palladius.github.io/demo-snake/',
+    cloud_url: 'https://puffin-login-932724269481.europe-west1.run.app/snake.html',
+    repo_url: 'https://github.com/palladius/demo-snake',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/demo-snake.png',
+    supports_puffin_login: true,
+    status: 'live',
+  },
+  {
+    id: 'tubature',
+    puffin_game_id: 'tubature',
+    title: '🚰 Tubature: The Dungeon Plumber',
+    shortTitle: 'Tubature',
+    emoji: '🚰',
+    play_url: 'https://palladius.github.io/tubature/',
+    repo_url: 'https://github.com/palladius/tubature',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/tubature.jpg',
+    supports_puffin_login: true,
+    status: 'live',
+  },
+  {
+    id: 'kids-jigsaw-puzzle',
+    puffin_game_id: 'kids-jigsaw-puzzle',
+    title: '🧩 Kids Jigsaw Puzzle',
+    shortTitle: 'Jigsaw Puzzle',
+    emoji: '🧩',
+    play_url: 'https://palladius.github.io/kids-jigsaw-puzzle/',
+    repo_url: 'https://github.com/palladius/kids-jigsaw-puzzle',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/kids-jigsaw-puzzle.png',
+    supports_puffin_login: true,
+    status: 'live',
+  },
+  {
+    id: 'carlesso-fotoquad',
+    puffin_game_id: 'carlesso-fotoquad',
+    title: '📸🧩 FotoQuad Solitario',
+    shortTitle: 'FotoQuad',
+    emoji: '📸',
+    play_url: 'https://palladius.github.io/carlesso-fotoquad/',
+    repo_url: 'https://github.com/palladius/carlesso-fotoquad',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/carlesso-fotoquad.jpg',
+    supports_puffin_login: true,
+    status: 'live',
+  },
+  {
+    id: 'tribecca',
+    puffin_game_id: 'tribecca',
+    title: '🇮🇹♟️🔺 TriBecca: Scacchi 3D a 3 Giocatori',
+    shortTitle: 'TriBecca',
+    emoji: '♟️',
+    play_url: 'https://palladius.github.io/tribecca/',
+    repo_url: 'https://github.com/palladius/tribecca',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/tribecca.png',
+    supports_puffin_login: true,
+    status: 'live',
+  },
+];
+
+export const PUFFIN_LOGIN_RING_CANDIDATES = [
+  {
+    id: 'family-mahjong-3d',
+    puffin_game_id: 'family-mahjong-3d',
+    title: '🀄 Family 3D Mahjong',
+    shortTitle: '3D Mahjong',
+    emoji: '🀄',
+    play_url: 'https://palladius.github.io/family-mahjong-3d/',
+    repo_url: 'https://github.com/palladius/family-mahjong-3d',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/family-mahjong-3d.jpg',
+    supports_puffin_login: false,
+    status: 'candidate',
+  },
+  {
+    id: 'ale-french',
+    puffin_game_id: 'ale-french',
+    title: '🇫🇷 Ale & Seby French',
+    shortTitle: 'Ale French',
+    emoji: '🇫🇷',
+    play_url: 'https://palladius.github.io/ale-french/',
+    repo_url: 'https://github.com/palladius/ale-french',
+    screenshot: 'https://palladius.github.io/vetrina/assets/screenshots/ale-french.png',
+    supports_puffin_login: false,
+    status: 'candidate',
+  },
+];
+
+let _cachedRingApps = [...PUFFIN_LOGIN_RING_DEFAULT];
+let _vetrinaRingSynced = false;
+
+export function getPuffinRingApps({ includeCandidates = false } = {}) {
+  if (!includeCandidates) {
+    return _cachedRingApps;
+  }
+  const existingIds = new Set(_cachedRingApps.map((a) => a.id));
+  const extras = PUFFIN_LOGIN_RING_CANDIDATES.filter((c) => !existingIds.has(c.id));
+  return [..._cachedRingApps, ...extras];
+}
+
+export function resolveGameFromRing(gameId) {
+  const clean = String(gameId || '').trim().toLowerCase();
+  const all = getPuffinRingApps({ includeCandidates: true });
+  return (
+    all.find(
+      (a) =>
+        a.id.toLowerCase() === clean ||
+        (a.puffin_game_id && a.puffin_game_id.toLowerCase() === clean)
+    ) || null
+  );
+}
+
+export async function syncPuffinRingFromVetrina() {
+  if (_vetrinaRingSynced) return _cachedRingApps;
+  try {
+    const res = await fetch(VETRINA_GAMES_JSON_URL);
+    if (!res.ok) return _cachedRingApps;
+    const games = await res.json();
+    if (!Array.isArray(games)) return _cachedRingApps;
+
+    const byId = new Map(_cachedRingApps.map((a) => [a.id, { ...a }]));
+    for (const g of games) {
+      if (!g || !g.id) continue;
+      const tags = Array.isArray(g.tags) ? g.tags.map((t) => String(t).toLowerCase()) : [];
+      const isLiveRing = g.supports_puffin_login === true || tags.includes('supports_puffin_login');
+      const isExplicitUpcoming = g.supports_puffin_login === false;
+      if (!isLiveRing && !isExplicitUpcoming && !byId.has(g.id)) continue;
+
+      const prev = byId.get(g.id) || {};
+      const rawTitle = String(g.title || prev.title || g.id);
+      const firstEmojiMatch = rawTitle.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+      const emoji = prev.emoji || (firstEmojiMatch ? firstEmojiMatch[0] : '🎮');
+      const cleanName = rawTitle
+        .replace(/^[^\w\p{L}]+/u, '')
+        .split('—')[0]
+        .split(':')[0]
+        .trim();
+      const shot = g.screenshot
+        ? g.screenshot.startsWith('http')
+          ? g.screenshot
+          : `https://palladius.github.io/vetrina/${g.screenshot.replace(/^\//, '')}`
+        : prev.screenshot;
+
+      byId.set(g.id, {
+        ...prev,
+        id: g.id,
+        puffin_game_id: g.puffin_game_id || prev.puffin_game_id || g.id,
+        title: rawTitle,
+        shortTitle: prev.shortTitle || cleanName || g.id,
+        emoji,
+        play_url: g.play_url || prev.play_url || VETRINA_RING_HASH_URL,
+        repo_url: g.repo_url || prev.repo_url || '',
+        screenshot: shot,
+        supports_puffin_login: Boolean(isLiveRing),
+        status: isLiveRing ? 'live' : prev.status || 'upcoming',
+      });
+    }
+    _cachedRingApps = Array.from(byId.values());
+    _vetrinaRingSynced = true;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('puffin-ring-updated', { detail: _cachedRingApps }));
+    }
+  } catch {}
+  return _cachedRingApps;
+}
 
 let sharedLbSheet = null;
 function getLeaderboardStyleSheet() {
@@ -2433,8 +3287,10 @@ export class PuffinLeaderboardElement extends BaseElement {
     window.addEventListener('puffin-lang-changed', this._onScore);
     window.addEventListener('puffin-auth-updated', this._onScore);
     window.addEventListener('puffin-user-changed', this._onScore);
+    window.addEventListener('puffin-ring-updated', this._onScore);
     this.render();
     this.syncFromCloud();
+    syncPuffinRingFromVetrina();
   }
 
   async syncFromCloud() {
@@ -2476,6 +3332,7 @@ export class PuffinLeaderboardElement extends BaseElement {
     window.removeEventListener('puffin-lang-changed', this._onScore);
     window.removeEventListener('puffin-auth-updated', this._onScore);
     window.removeEventListener('puffin-user-changed', this._onScore);
+    window.removeEventListener('puffin-ring-updated', this._onScore);
   }
 
   render() {
@@ -2527,37 +3384,159 @@ export class PuffinLeaderboardElement extends BaseElement {
         `
         : '';
 
+      const nameHtml =
+        profile.role === 'bot'
+          ? `<tt class="robot-tt">${profile.shortName}</tt>`
+          : profile.shortName;
+
+      const rolePillHtml = `<span class="hof-role-pill">${profile.emoji || ''} ${profile.rpgClass || ''}</span>`;
+      const summaryHtml = entry.summary_text
+        ? `<div class="hof-summary-line">${rolePillHtml}${entry.summary_text}</div>`
+        : `<div class="hof-summary-line">${rolePillHtml}</div>`;
+
       return `
-        <div class="hof-row" role="listitem" tabindex="0" data-rank="${rank}" style="--row-color: ${profile.colorHex}">
-          <div class="hof-main">
-            <div class="hof-left">
-              <span class="hof-rank">${rank}</span>
-              <div class="lb-avatar-wrap">
-                <img class="lb-avatar-img" src="${profile.avatar}" alt="${profile.shortName}" loading="lazy" />
-              </div>
-              <span class="hof-name">${profile.shortName}</span>
-            </div>
-            <div class="hof-right-group">
-              <span class="hof-score">${Number(entry.score).toLocaleString('en-US')}</span>
-              ${adminRowBtns}
-            </div>
+        <div class="hof-row" role="listitem" tabindex="0" data-rank="${rank}" data-player-id="${profile.id || 'null'}" style="--row-color: ${profile.colorHex}">
+          <div class="lb-avatar-wrap">
+            <img class="lb-avatar-img" src="${profile.avatar}" alt="${profile.shortName}" loading="lazy" />
+            ${
+              profile.video
+                ? `<video class="lb-avatar-video" data-src="${profile.video}" muted loop playsinline preload="none"></video>`
+                : ''
+            }
           </div>
-          <div class="hof-hover-details">
-            <code>${entry.game_id}</code> • ⏱️ ${timeInfo.durationText} (${timeInfo.rangeText}) • 🌐 ${hostStr}${
+          <div class="hof-content-col">
+            <div class="hof-main">
+              <div class="hof-left">
+                <span class="hof-rank">#${rank}</span>
+                <span class="hof-name">${nameHtml}</span>
+              </div>
+              <div class="hof-right-group">
+                <span class="hof-score">${Number(entry.score).toLocaleString('en-US')}</span>
+                ${adminRowBtns}
+              </div>
+            </div>
+            <div class="hof-hover-details">
+              ${summaryHtml}
+              <div>
+                ${(() => {
+                  const gInfo = resolveGameFromRing(entry.game_id);
+                  if (gInfo && gInfo.play_url) {
+                    return `<a class="hof-game-link" href="${gInfo.play_url}" target="_blank" rel="noopener" title="Play ${gInfo.shortTitle} (${gInfo.play_url})">${gInfo.emoji || '🎮'} ${entry.game_id} ↗</a>`;
+                  }
+                  return `<code>${entry.game_id}</code>`;
+                })()} • ⏱️ ${timeInfo.durationText} (${timeInfo.rangeText}) • 🌐 ${hostStr}${
         extraPairs ? ` • <code>${extraPairs}</code>` : ''
       }
+              </div>
+            </div>
           </div>
         </div>
       `;
     });
 
-    this.$list.innerHTML = adminHeaderHtml + rowsHtml.join('');
+    const ringApps = getPuffinRingApps();
+    const curGameId = (this.activeFilter !== 'ALL' ? this.activeFilter : resolvePuffinConfig().appId || '').toLowerCase();
+    const curIdx = Math.max(
+      0,
+      ringApps.findIndex(
+        (a) => a.id.toLowerCase() === curGameId || (a.puffin_game_id || '').toLowerCase() === curGameId
+      )
+    );
+    const prevApp = ringApps[(curIdx - 1 + ringApps.length) % ringApps.length] || ringApps[0];
+    const nextApp = ringApps[(curIdx + 1) % ringApps.length] || ringApps[0];
+    const ringHubUrl = this.getAttribute('ring-url') || './ring.html';
+
+    const ringPillsHtml = ringApps
+      .map((a) => {
+        const isLive = a.status === 'live';
+        const statusDot = isLive ? '🟢' : '🔜';
+        return `<a class="hof-ring-app-pill ${isLive ? 'is-live' : 'is-upcoming'}" href="${a.play_url}" target="_blank" rel="noopener" title="${a.title} (${isLive ? 'Live in Puffin Login Ring' : 'Coming Soon to Puffin Login Ring'})">${statusDot} ${a.emoji} ${a.shortTitle}</a>`;
+      })
+      .join('');
+
+    const ringFooterHtml = `
+      <div class="hof-ring-footer" role="navigation" aria-label="Puffin Login Ring WebRing">
+        <div class="hof-ring-nav">
+          <a class="hof-ring-step-btn" href="${prevApp.play_url}" target="_blank" rel="noopener" title="Previous App in Ring: ${prevApp.title}">
+            ⬅️ ${prevApp.emoji} ${prevApp.shortTitle}
+          </a>
+          <a class="hof-ring-hub-link" href="${ringHubUrl}" title="Open the Glorious Puffin Login Ring of Fire Hub!">
+            🔥💍 Puffin Login Ring (${ringApps.length} Apps)
+          </a>
+          <a class="hof-ring-step-btn" href="${nextApp.play_url}" target="_blank" rel="noopener" title="Next App in Ring: ${nextApp.title}">
+            ${nextApp.emoji} ${nextApp.shortTitle} ➡️
+          </a>
+        </div>
+        <div class="hof-ring-pills">
+          ${ringPillsHtml}
+          <a class="hof-ring-app-pill" href="${VETRINA_RING_HASH_URL}" target="_blank" rel="noopener" title="Filter all Puffin Login Ring apps on palladius/vetrina">
+            🎠 Vetrina #puffin-ring ↗
+          </a>
+        </div>
+      </div>
+    `;
+
+    this.$list.innerHTML = adminHeaderHtml + rowsHtml.join('') + ringFooterHtml;
+
+    this.$list.querySelectorAll('.hof-row').forEach((row) => {
+      const startVid = () => {
+        const vid = row.querySelector('.lb-avatar-video');
+        if (!vid || vid.dataset.failed === '1') return;
+        if (!vid.src && vid.dataset.src) {
+          vid.src = vid.dataset.src;
+          vid.addEventListener(
+            'error',
+            () => {
+              vid.dataset.failed = '1';
+              row.classList.remove('video-playing');
+            },
+            { once: true }
+          );
+          vid.addEventListener('playing', () => {
+            row.classList.add('video-playing');
+          });
+        }
+        const p = vid.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      };
+      const stopVid = () => {
+        const vid = row.querySelector('.lb-avatar-video');
+        if (!vid) return;
+        row.classList.remove('video-playing');
+        try {
+          vid.pause();
+        } catch {}
+      };
+      row.addEventListener('mouseenter', startVid);
+      row.addEventListener('focusin', startVid);
+      row.addEventListener('mouseleave', stopVid);
+      row.addEventListener('focusout', stopVid);
+    });
   }
 }
 
 const _activeGameStarts = new Map();
 
 export const PuffinLogin = {
+  /**
+   * Dedicated programmatic login for Antigravity UAT Bot ('bot' / 'saga').
+   * Never selectable via human UI ("This is for bots not for you!").
+   */
+  async loginAsBot(plainSecret) {
+    const botProfile = PUFFIN_PROFILES.find((p) => p.id === 'saga');
+    if (!botProfile) return null;
+    const hash = await computePuffinSecretHash('saga', plainSecret);
+    if (hash !== botProfile.secretHash) {
+      throw new Error('Invalid UAT Bot secret');
+    }
+    const el = document.querySelector('puffin-login');
+    if (el) {
+      el.saveActiveSession('saga', true);
+      if (el.$dialog?.open) el.$dialog.close();
+      return el.getCurrentUser();
+    }
+    return botProfile;
+  },
   init(options = {}) {
     if (typeof window !== 'undefined') {
       window.PUFFINLOGIN_ENV = { ...(window.PUFFINLOGIN_ENV || {}), ...options };
@@ -2763,7 +3742,490 @@ export const PuffinLogin = {
     }
     return true;
   },
+
+  getRingApps(options) {
+    return getPuffinRingApps(options);
+  },
+
+  syncRingFromVetrina() {
+    return syncPuffinRingFromVetrina();
+  },
 };
+
+const RING_CSS = `
+:host {
+  display: block;
+  font-family: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+  color: #f8fafc;
+}
+
+.ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.ring-controls-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ring-mode-btn {
+  cursor: pointer;
+  padding: 0.38rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fde68a;
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  transition: all 0.18s ease;
+}
+
+.ring-mode-btn.active,
+.ring-mode-btn:hover {
+  background: linear-gradient(135deg, #ea580c, #d97706);
+  color: #fff;
+  border-color: #fde047;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.55);
+}
+
+.ring-stage {
+  position: relative;
+  width: min(100%, 540px);
+  aspect-ratio: 1 / 1;
+  border-radius: 1.75rem;
+  overflow: hidden;
+  border: 3px solid rgba(251, 191, 36, 0.65);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.78), 0 0 40px rgba(249, 115, 22, 0.35);
+  background: #070913;
+  user-select: none;
+}
+
+.ring-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.ring-orbit-wheel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: puffinOrbitSpin 32s linear infinite;
+}
+
+.ring-stage:hover .ring-orbit-wheel,
+.ring-stage:hover .ring-medallion-upright {
+  animation-play-state: paused;
+}
+
+@keyframes puffinOrbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes puffinOrbitCounterSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.ring-spoke {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--spoke-angle, 0deg)) translateY(calc(-1 * var(--orbit-radius, 188px)));
+}
+
+@media (max-width: 540px) {
+  .ring-spoke {
+    transform: rotate(var(--spoke-angle, 0deg)) translateY(-35vw);
+  }
+}
+
+.ring-spoke-unrotate {
+  transform: rotate(calc(-1 * var(--spoke-angle, 0deg)));
+}
+
+.ring-medallion-upright {
+  animation: puffinOrbitCounterSpin 32s linear infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 0;
+  height: 0;
+  position: relative;
+}
+
+.ring-medallion {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #fff;
+  transition: scale 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ring-medallion:hover,
+.ring-medallion:focus-visible {
+  scale: 1.22;
+  z-index: 30;
+}
+
+.ring-medallion-circle {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #facc15;
+  background: #0f172a;
+  box-shadow: 0 0 22px rgba(250, 204, 21, 0.75), 0 6px 18px rgba(0, 0, 0, 0.85);
+  position: relative;
+}
+
+@media (max-width: 500px) {
+  .ring-medallion-circle {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+.ring-medallion[data-status="live"] .ring-medallion-circle {
+  border-color: #34d399;
+  box-shadow: 0 0 24px rgba(52, 211, 153, 0.85), 0 0 12px rgba(250, 204, 21, 0.65);
+}
+
+.ring-medallion[data-status="upcoming"] .ring-medallion-circle {
+  border-color: #fbbf24;
+  border-style: dashed;
+}
+
+.ring-medallion[data-status="candidate"] .ring-medallion-circle {
+  border-color: #38bdf8;
+  opacity: 0.9;
+}
+
+.ring-medallion-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ring-medallion-status {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 0.58rem;
+  font-weight: 900;
+  padding: 0.1rem 0.36rem;
+  border-radius: 999px;
+  background: #064e3b;
+  color: #6ee7b7;
+  border: 1.5px solid #34d399;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+}
+
+.ring-medallion[data-status="upcoming"] .ring-medallion-status {
+  background: #451a03;
+  color: #fde68a;
+  border-color: #fbbf24;
+}
+
+.ring-medallion[data-status="candidate"] .ring-medallion-status {
+  background: #0c4a6e;
+  color: #bae6fd;
+  border-color: #38bdf8;
+}
+
+.ring-medallion-label {
+  margin-top: 0.28rem;
+  background: rgba(9, 13, 28, 0.92);
+  color: #fef08a;
+  border: 1.5px solid rgba(250, 204, 21, 0.6);
+  border-radius: 999px;
+  padding: 0.14rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+}
+
+.ring-geocities-bar {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 1rem;
+  background: linear-gradient(90deg, rgba(45, 20, 8, 0.92), rgba(20, 16, 42, 0.95), rgba(45, 20, 8, 0.92));
+  border: 1.5px solid rgba(251, 146, 60, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ring-geocities-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+.ring-geo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.34rem 0.62rem;
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: #fde047;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ring-geo-btn:hover {
+  background: rgba(234, 88, 12, 0.32);
+  color: #fff;
+  border-color: #facc15;
+  transform: translateY(-1px);
+}
+
+.ring-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.ring-app-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.95rem;
+  background: rgba(17, 24, 39, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  text-decoration: none;
+  color: #f8fafc;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.ring-app-card:hover {
+  transform: translateY(-2px);
+  border-color: #facc15;
+}
+
+.ring-app-card.is-live {
+  border-color: rgba(52, 211, 153, 0.55);
+}
+
+.ring-app-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #facc15;
+  flex-shrink: 0;
+}
+
+.ring-app-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ring-app-title {
+  font-size: 0.84rem;
+  font-weight: 900;
+  color: #fef08a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ring-app-url {
+  font-size: 0.66rem;
+  color: #94a3b8;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+`;
+
+export class PuffinRingElement extends BaseElement {
+  static get observedAttributes() {
+    return ['include-candidates', 'bg-src'];
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    const styleEl = document.createElement('style');
+    styleEl.textContent = RING_CSS;
+    this.shadowRoot.append(styleEl);
+    this.$root = document.createElement('div');
+    this.$root.className = 'ring-wrap';
+    this.shadowRoot.append(this.$root);
+    this.includeCandidates = this.hasAttribute('include-candidates');
+    this._onRingUpdate = () => this.render();
+  }
+
+  connectedCallback() {
+    this.includeCandidates = this.hasAttribute('include-candidates');
+    window.addEventListener('puffin-ring-updated', this._onRingUpdate);
+    this.render();
+    syncPuffinRingFromVetrina();
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('puffin-ring-updated', this._onRingUpdate);
+  }
+
+  attributeChangedCallback() {
+    if (this.isConnected) {
+      this.includeCandidates = this.hasAttribute('include-candidates');
+      this.render();
+    }
+  }
+
+  render() {
+    const apps = getPuffinRingApps({ includeCandidates: this.includeCandidates });
+    const total = apps.length || 1;
+    const bgSrc = this.getAttribute('bg-src') || './assets/puffin-ring.png';
+
+    const spokesHtml = apps
+      .map((app, idx) => {
+        const angleDeg = Math.round((360 / total) * idx);
+        const statusLabel =
+          app.status === 'live' ? '🟢 LIVE' : app.status === 'upcoming' ? '🔜 NEXT' : '📋 CANDIDATE';
+        return `
+          <div class="ring-spoke" style="--spoke-angle: ${angleDeg}deg; --orbit-radius: 196px;">
+            <div class="ring-spoke-unrotate" style="--spoke-angle: ${angleDeg}deg;">
+              <div class="ring-medallion-upright">
+                <a class="ring-medallion" href="${app.play_url}" target="_blank" rel="noopener" data-status="${app.status}" data-ring-id="${app.id}" title="${app.title} — ${app.play_url}">
+                  <div class="ring-medallion-circle">
+                    <img class="ring-medallion-img" src="${app.screenshot}" alt="${app.shortTitle}" loading="lazy" />
+                  </div>
+                  <span class="ring-medallion-status">${statusLabel}</span>
+                  <span class="ring-medallion-label">${app.emoji} ${app.shortTitle}</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    const cardsHtml = apps
+      .map((app) => {
+        const badge =
+          app.status === 'live'
+            ? '🟢 Live in Ring (supports_puffin_login: true)'
+            : app.status === 'upcoming'
+            ? '🔜 Arriving Next in Ring'
+            : '📋 Future Candidate';
+        return `
+          <a class="ring-app-card ${app.status === 'live' ? 'is-live' : ''}" href="${app.play_url}" target="_blank" rel="noopener">
+            <img class="ring-app-thumb" src="${app.screenshot}" alt="${app.shortTitle}" loading="lazy" />
+            <div class="ring-app-meta">
+              <div class="ring-app-title">${app.emoji} ${app.shortTitle}</div>
+              <div style="font-size:0.68rem; color:#fde68a; font-weight:700;">${badge}</div>
+              <div class="ring-app-url">${app.play_url}</div>
+            </div>
+          </a>
+        `;
+      })
+      .join('');
+
+    const firstApp = apps[0];
+    const lastApp = apps[apps.length - 1] || firstApp;
+
+    this.$root.innerHTML = `
+      <div class="ring-controls-top">
+        <button type="button" class="ring-mode-btn ${!this.includeCandidates ? 'active' : ''}" data-mode="core">
+          🔥 Core Ring (${getPuffinRingApps({ includeCandidates: false }).length} Apps: ${getPuffinRingApps({ includeCandidates: false }).map((a) => a.shortTitle).join(' + ')})
+        </button>
+        <button type="button" class="ring-mode-btn ${this.includeCandidates ? 'active' : ''}" data-mode="all">
+          🌌 Preview Full N-App Orbit (${getPuffinRingApps({ includeCandidates: true }).length} Apps)
+        </button>
+      </div>
+
+      <div class="ring-stage" aria-label="Rotating Puffin Login Ring of Fire">
+        <img class="ring-bg-img" src="${bgSrc}" alt="Puffin Login Ring of Fire" />
+        <div class="ring-orbit-wheel">
+          ${spokesHtml}
+        </div>
+      </div>
+
+      <div class="ring-geocities-bar">
+        <a class="ring-geo-btn" href="${lastApp.play_url}" target="_blank" rel="noopener">
+          ⬅️ Prev: ${lastApp.emoji} ${lastApp.shortTitle}
+        </a>
+        <a class="ring-geo-btn" href="${VETRINA_RING_HASH_URL}" target="_blank" rel="noopener">
+          🎠 Central Registry: palladius/vetrina (#puffin-ring) ↗
+        </a>
+        <button type="button" class="ring-geo-btn" data-action="random">
+          🎲 Random Ring App
+        </button>
+        <a class="ring-geo-btn" href="${firstApp.play_url}" target="_blank" rel="noopener">
+          Next: ${firstApp.emoji} ${firstApp.shortTitle} ➡️
+        </a>
+      </div>
+
+      <div class="ring-cards-grid">
+        ${cardsHtml}
+      </div>
+    `;
+
+    this.$root.querySelectorAll('[data-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-mode');
+        this.includeCandidates = mode === 'all';
+        this.render();
+      });
+    });
+
+    const randBtn = this.$root.querySelector('[data-action="random"]');
+    if (randBtn) {
+      randBtn.addEventListener('click', () => {
+        const pick = apps[Math.floor(Math.random() * apps.length)] || firstApp;
+        if (pick?.play_url) {
+          window.open(pick.play_url, '_blank', 'noopener');
+        }
+      });
+    }
+  }
+}
 
 if (typeof customElements !== 'undefined') {
   if (!customElements.get('puffin-login')) {
@@ -2771,6 +4233,9 @@ if (typeof customElements !== 'undefined') {
   }
   if (!customElements.get('puffin-leaderboard')) {
     customElements.define('puffin-leaderboard', PuffinLeaderboardElement);
+  }
+  if (!customElements.get('puffin-ring')) {
+    customElements.define('puffin-ring', PuffinRingElement);
   }
 }
 
