@@ -2,6 +2,12 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.1.1] - 2026-11-07
+
+### 🐛 Fixed
+- **`ThreeChessRulesManager` `Map` Iteration Fix**: Snapshot `[...this.board.entries()]` inside `getAllLegalMovesForColor`, `getAttackersOf`, and `findKingSquare` so temporary piece move/restore checks never mutate live `Map` iteration order during turn transitions.
+- **Self-Hosted Three.js Importmap & SVG Ray Click-Through**: Added local `./vendor/three/` importmap in `index.html`, set `require-login="false"` on `<puffin-login>` so the board is immediately playable on load, and added `pointer-events: none` on 2D ray/piece overlay layers so clicking highlighted target squares never gets intercepted by ray circles.
+
 ## [0.1.0] - 2026-11-07
 
 ### ✨ Added

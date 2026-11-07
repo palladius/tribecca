@@ -561,7 +561,7 @@ export class ThreeChessRulesManager {
    * Finds the squareId of the King belonging to `color`.
    */
   findKingSquare(color) {
-    for (const [sq, p] of this.board.entries()) {
+    for (const [sq, p] of [...this.board.entries()]) {
       if (p.type === 'k' && p.color === color && !p.isFlotsam) {
         return sq;
       }
@@ -574,7 +574,7 @@ export class ThreeChessRulesManager {
    */
   getAttackersOf(targetSquareId, defenderColor) {
     const attackers = [];
-    for (const [sq, p] of this.board.entries()) {
+    for (const [sq, p] of [...this.board.entries()]) {
       if (p.color === defenderColor || p.isFlotsam) continue;
       if (this.eliminatedColors.has(p.color)) continue;
       const { moves } = this.getPseudoLegalMovesAndRays(sq);
@@ -678,7 +678,7 @@ export class ThreeChessRulesManager {
    */
   getAllLegalMovesForColor(color) {
     const all = [];
-    for (const [sq, p] of this.board.entries()) {
+    for (const [sq, p] of [...this.board.entries()]) {
       if (p.color === color && !p.isFlotsam) {
         const { moves } = this.getLegalMovesAndRays(sq);
         all.push(...moves);

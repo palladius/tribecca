@@ -156,3 +156,14 @@ test('All 4 Elimination Modes (destroy, protoss_conquer, flotsam_obstacles, sudd
   rules._eliminatePlayer('red', 'white', 'checkmate');
   assert.equal(rules.getPiece('L8'), null);
 });
+
+test('Full 48-piece board executeMove and getAllLegalMovesForColor terminate cleanly without Map mutation loop', () => {
+  const topo = new BoardTopologyManager();
+  const rules = new ThreeChessRulesManager(topo);
+
+  assert.equal(rules.getAllLegalMovesForColor('white').length, 20);
+  const rec = rules.executeMove('D2', 'D4', 'q');
+  assert.ok(rec);
+  assert.equal(rules.getActiveColor(), 'red');
+  assert.equal(rules.getAllLegalMovesForColor('red').length, 20);
+});

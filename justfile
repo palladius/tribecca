@@ -7,8 +7,8 @@ default:
 test:
     node --test tests/*.test.mjs
 
-# Serve TriBecca locally on http://localhost:8080
-serve port="8080":
+# Serve TriBecca locally on http://localhost:8333
+serve port="8333":
     python3 -m http.server {{port}}
 
 # Build verification (static ES modules + unit tests)

@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🇮🇹 TriBecca — Scacchi Tricolore 3D a 3 Giocatori</title>
+  <link rel="icon" type="image/png" href="./docs/logo/logo.png" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+  <script type="module" src="./src/puffin-login.js"></script>
   <style>
     :root {
       --bg-dark: #090f1d;
@@ -307,7 +317,7 @@
       <button data-cam-angle="120" title="Inquadra Rosso (120°)">🔴 120°</button>
       <button data-cam-angle="240" title="Inquadra Verde/Nero (240°)">🟢 240°</button>
 
-      <puffin-login id="puffin-widget" app-id="tricolore-chess-3d"></puffin-login>
+      <puffin-login id="puffin-widget" app-id="tricolore-chess-3d" require-login="false" lang="it"></puffin-login>
     </div>
   </header>
 

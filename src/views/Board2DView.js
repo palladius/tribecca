@@ -69,8 +69,11 @@ export class Board2DView {
     this.frameLayer = document.createElementNS(SVG_NS, 'g');
     this.squaresLayer = document.createElementNS(SVG_NS, 'g');
     this.raysLayer = document.createElementNS(SVG_NS, 'g');
+    this.raysLayer.style.pointerEvents = 'none';
     this.piecesLayer = document.createElementNS(SVG_NS, 'g');
+    this.piecesLayer.style.pointerEvents = 'none';
     this.labelsLayer = document.createElementNS(SVG_NS, 'g');
+    this.labelsLayer.style.pointerEvents = 'none';
 
     this.rootGroup.appendChild(this.frameLayer);
     this.rootGroup.appendChild(this.squaresLayer);
@@ -240,6 +243,8 @@ export class Board2DView {
     // Draw all 96 squares
     for (const sq of this.topology.getAllSquares()) {
       const g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute('class', 'sq-group');
+      g.setAttribute('data-sq', sq.id);
       g.style.cursor = 'pointer';
 
       const pts = sq.corners.map((p) => `${p.x.toFixed(3)},${p.z.toFixed(3)}`).join(' ');
