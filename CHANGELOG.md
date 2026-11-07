@@ -2,6 +2,12 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.1.5] - 2026-11-07
+
+### 🐛 Fixed
+- **Interactive Pawn Promotion Picker Modal (`index.html`, `src/main.js`, `src/managers/ThreeChessRulesManager.js`)**:
+  - When a human player's pawn reaches the promotion rank (`row === 0` of an enemy sector, e.g., `E11 -> E12`), the game now opens the **`👑 Promozione Pedone`** modal displaying the player's PuffinLogin avatar and 4 choices (`♕ Regina`, `♖ Torre`, `♗ Alfiere`, `♘ Cavallo`, plus `✖️ Annulla mossa`) instead of silently auto-promoting to a Queen.
+
 ## [0.1.4] - 2026-11-07
 
 ### ✨ Added

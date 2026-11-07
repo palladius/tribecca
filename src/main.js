@@ -41,6 +41,60 @@ function initTriBeccaApp() {
   const view3dContainer = document.getElementById('board-3d-container');
   const view2dContainer = document.getElementById('board-2d-container');
 
+  // Pawn Promotion Modal state & handlers
+  const promoSectionEl = document.getElementById('promotion-section');
+  const promoAvatarEl = document.getElementById('promo-player-avatar');
+  const promoTitleEl = document.getElementById('promo-title');
+  const promoSubtitleEl = document.getElementById('promo-subtitle');
+  const promoCancelBtn = document.getElementById('btn-promo-cancel');
+  let pendingPromotion = null; // { from, to }
+
+  const openPromotionModal = (from, to, piece) => {
+    pendingPromotion = { from, to };
+    const seat = seats.getSeat(piece.color);
+    const meta = SECTOR_META[piece.color];
+    if (promoAvatarEl && seat?.avatar) {
+      promoAvatarEl.src = seat.avatar;
+    }
+    if (promoTitleEl) {
+      promoTitleEl.textContent = `👑 Promozione Pedone (${from} → ${to})!`;
+    }
+    if (promoSubtitleEl) {
+      promoSubtitleEl.textContent = `${seat?.shortName || meta?.labelIt}: scegli in quale pezzo trasformare il tuo Pedone ${meta?.badge || ''}:`;
+    }
+    const iconColor =
+      piece.color === 'white' ? '#f8fafc' : piece.color === 'red' ? '#f87171' : '#4ade80';
+    document.querySelectorAll('.promo-choice-icon').forEach((el) => {
+      el.style.color = iconColor;
+    });
+    if (promoSectionEl) {
+      promoSectionEl.hidden = false;
+    }
+  };
+
+  const closePromotionModal = () => {
+    pendingPromotion = null;
+    if (promoSectionEl) {
+      promoSectionEl.hidden = true;
+    }
+  };
+
+  document.querySelectorAll('.promo-choice-btn[data-promo-type]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!pendingPromotion) return;
+      const { from, to } = pendingPromotion;
+      const chosenType = btn.dataset.promoType || 'q';
+      closePromotionModal();
+      rules.executeMove(from, to, chosenType);
+    });
+  });
+
+  if (promoCancelBtn) {
+    promoCancelBtn.addEventListener('click', () => {
+      closePromotionModal();
+    });
+  }
+
   // Shared click handler for both 2D and 3D views
   const handleSquareClick = (squareId) => {
     const selectedSq = rules.selectedSquare;
@@ -53,8 +107,19 @@ function initTriBeccaApp() {
 
       if (canAct && (isTurnPiece || rules.editorMode)) {
         const { moves } = rules.getLegalMovesAndRays(selectedSq);
-        const isLegalTarget = rules.editorMode || moves.some((m) => m.to === squareId);
+        const matchedMove = moves.find((m) => m.to === squareId);
+        const isLegalTarget = rules.editorMode || Boolean(matchedMove);
         if (isLegalTarget) {
+          const toNode = topology.getSquare(squareId);
+          const isEditorPromo =
+            rules.editorMode &&
+            selPiece?.type === 'p' &&
+            Boolean(toNode && toNode.sector !== selPiece.homeSector && toNode.row === 0);
+
+          if (matchedMove?.isPromotion || isEditorPromo) {
+            openPromotionModal(selectedSq, squareId, selPiece);
+            return;
+          }
           rules.executeMove(selectedSq, squareId, 'q');
           return;
         }
@@ -419,6 +484,8 @@ function initTriBeccaApp() {
     view2D,
     view3D,
     setViewMode,
+    handleSquareClick,
+    openPromotionModal,
   };
 }
 

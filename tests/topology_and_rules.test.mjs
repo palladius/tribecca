@@ -208,3 +208,26 @@ test('SimpleAIManager finds immediate 1-move Checkmate and completes full 3-CPU 
   assert.ok(rules.winnerColor);
   assert.match(rules.gameOverReason, /Scacco Matto/);
 });
+
+test('Pawn reaching enemy back rank (e.g. E11 -> E12) supports promoting to q, r, b, or n', () => {
+  const topo = new BoardTopologyManager();
+  const rules = new ThreeChessRulesManager(topo);
+
+  for (const promoType of ['q', 'r', 'b', 'n']) {
+    rules.board.clear();
+    rules.activeColorIndex = 0; // white
+    rules.board.set('A1', { type: 'k', color: 'white', homeSector: 0, moved: false });
+    rules.board.set('D8', { type: 'k', color: 'red', homeSector: 1, moved: false });
+    rules.board.set('I12', { type: 'k', color: 'green', homeSector: 2, moved: false });
+    rules.board.set('E11', { type: 'p', color: 'white', homeSector: 0, moved: true });
+
+    const { moves } = rules.getLegalMovesAndRays('E11');
+    const promoMove = moves.find((m) => m.to === 'E12');
+    assert.ok(promoMove && promoMove.isPromotion);
+
+    const rec = rules.executeMove('E11', 'E12', promoType);
+    assert.ok(rec);
+    assert.equal(rules.getPiece('E12').type, promoType);
+    assert.match(rec.notation, new RegExp(`=${promoType.toUpperCase()}$`));
+  }
+});

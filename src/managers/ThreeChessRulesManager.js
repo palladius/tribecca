@@ -769,6 +769,10 @@ export class ThreeChessRulesManager {
       if (!chosenMove) return null;
     } else {
       const captured = this.board.get(to) || null;
+      const toNode = this.topology.getSquare(to);
+      const isEditorPromo =
+        movingPiece.type === 'p' &&
+        Boolean(toNode && toNode.sector !== movingPiece.homeSector && toNode.row === 0);
       chosenMove = {
         from,
         to,
@@ -776,6 +780,7 @@ export class ThreeChessRulesManager {
         captured: captured ? { ...captured } : null,
         path: [from, to],
         rayKind: 'editor',
+        isPromotion: isEditorPromo,
       };
     }
 

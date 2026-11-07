@@ -359,6 +359,84 @@
       color: #fde047;
       margin-bottom: 4px;
     }
+
+    /* Pawn Promotion Picker Modal */
+    #promotion-section {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 15, 29, 0.72);
+      backdrop-filter: blur(4px);
+      z-index: 95;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #promotion-section[hidden] {
+      display: none !important;
+    }
+    .promo-card {
+      background: rgba(15, 23, 42, 0.97);
+      border: 2px solid var(--accent-gold);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 20px 52px rgba(0, 0, 0, 0.85);
+      text-align: center;
+    }
+    .promo-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .promo-header img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2.5px solid #facc15;
+    }
+    .promo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .promo-choice-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 14px 10px;
+      border-radius: 12px;
+      background: #1e293b;
+      border: 2px solid #475569;
+      cursor: pointer;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .promo-choice-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-gold);
+      background: #334155;
+    }
+    .promo-choice-icon {
+      font-size: 2.3rem;
+      line-height: 1;
+    }
+    .promo-choice-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .promo-choice-desc {
+      font-size: 0.74rem;
+      color: #94a3b8;
+    }
     #hof-victory-subtitle {
       font-size: 0.88rem;
       color: #f8fafc;
@@ -537,6 +615,48 @@
         </div>
       </div>
       <puffin-leaderboard id="game-lb" filter-game="tricolore-chess-3d"></puffin-leaderboard>
+    </div>
+  </section>
+
+  <!-- 6. Pawn Promotion Choice Modal -->
+  <section id="promotion-section" hidden>
+    <div class="promo-card">
+      <div class="promo-header">
+        <img id="promo-player-avatar" src="assets/avatars/riccardo.png" alt="Giocatore" />
+        <div style="text-align:left;">
+          <div id="promo-title" style="font-size:1.12rem;font-weight:900;color:#fde047;">
+            👑 Promozione del Pedone!
+          </div>
+          <div id="promo-subtitle" style="font-size:0.84rem;color:#cbd5e1;">
+            Il tuo pedone è arrivato in fondo! Scegli in quale pezzo trasformarlo:
+          </div>
+        </div>
+      </div>
+      <div class="promo-grid">
+        <button type="button" class="promo-choice-btn" data-promo-type="q">
+          <span class="promo-choice-icon">♕</span>
+          <span class="promo-choice-name">Regina</span>
+          <span class="promo-choice-desc">Torre + Alfiere (La più forte!)</span>
+        </button>
+        <button type="button" class="promo-choice-btn" data-promo-type="r">
+          <span class="promo-choice-icon">♖</span>
+          <span class="promo-choice-name">Torre</span>
+          <span class="promo-choice-desc">Raggi dritti ortogonali</span>
+        </button>
+        <button type="button" class="promo-choice-btn" data-promo-type="b">
+          <span class="promo-choice-icon">♗</span>
+          <span class="promo-choice-name">Alfiere</span>
+          <span class="promo-choice-desc">Diagonali + Biforcazione Rosetta</span>
+        </button>
+        <button type="button" class="promo-choice-btn" data-promo-type="n">
+          <span class="promo-choice-icon">♘</span>
+          <span class="promo-choice-name">Cavallo</span>
+          <span class="promo-choice-desc">Salto a L sopra i pezzi</span>
+        </button>
+      </div>
+      <button type="button" id="btn-promo-cancel" style="width:100%;justify-content:center;">
+        ✖️ Annulla mossa
+      </button>
     </div>
   </section>
 
