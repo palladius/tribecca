@@ -1,17 +1,23 @@
 /**
  * @fileoverview TriBecca (Scacchi Tricolore 3D) — Main Application Entrypoint.
  * Wires only Managers, Event Bus, and Thin Views (Niccolò Rule #2: No Gameplay Rules in main.js).
+ * Implements `webapp-that-riccardo-likes` (monochrome `currentColor` SVGs, URL + localStorage state
+ * persistence across F5 reload, Carlessian Header/Footer) and `modern-web-guidance` (`<dialog>`).
  */
 
 import { GameEventBus, GameContext } from './core/GameEventBus.js';
 import { BoardTopologyManager, SECTOR_META, PLAYER_COLORS } from './managers/BoardTopologyManager.js';
-import { ThreeChessRulesManager, ELIMINATION_MODES } from './managers/ThreeChessRulesManager.js';
+import { ThreeChessRulesManager } from './managers/ThreeChessRulesManager.js';
 import { PlayerSeatManager, PUFFIN_SEAT_PROFILES } from './managers/PlayerSeatManager.js';
 import { SimpleAIManager } from './managers/SimpleAIManager.js';
 import { AudioListener } from './listeners/AudioListener.js';
 import { Board2DView } from './views/Board2DView.js';
 import { Board3DView } from './views/Board3DView.js';
 import { PuffinLogin, validateAndNormalizeScorePayload } from './puffin-login.js';
+import { svgIcon, armyDotHtml } from './ui/icons.js';
+
+const APP_VERSION = '0.2.0';
+const UI_STATE_STORAGE_KEY = 'tribecca_ui_state_v2';
 
 const PIECE_NAMES_IT = {
   k: 'Re ♔',
@@ -22,7 +28,74 @@ const PIECE_NAMES_IT = {
   p: 'Pedone ♙',
 };
 
+/**
+ * Canonical Two-Tier State Hydration (`URL Query > localStorage > Default`)
+ * from `webapp-that-riccardo-likes` Section 7.
+ */
+function createPageState(storageKey, defaults) {
+  function read() {
+    let saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    } catch (_) {}
+    const params = Object.fromEntries(new URLSearchParams(window.location.search));
+    return { ...defaults, ...saved, ...params };
+  }
+
+  function write(patch, { push = false } = {}) {
+    const next = { ...read(), ...patch };
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch (_) {}
+    const url = new URL(window.location.href);
+    for (const [k, v] of Object.entries(next)) {
+      if (v === undefined || v === null || v === defaults[k]) {
+        url.searchParams.delete(k);
+      } else {
+        url.searchParams.set(k, String(v));
+      }
+    }
+    window.history[push ? 'pushState' : 'replaceState'](next, '', url);
+    updateCarlessianFooterLinks();
+    return next;
+  }
+
+  return { read, write };
+}
+
+function updateCarlessianFooterLinks() {
+  const isProd =
+    typeof window !== 'undefined' &&
+    (window.location.hostname.endsWith('github.io') ||
+      window.location.hostname.endsWith('palladius.it'));
+  const envName = isProd ? 'gh-pages' : 'development';
+  const envBadge = document.getElementById('footer-env-badge');
+  if (envBadge) {
+    envBadge.dataset.env = envName;
+    envBadge.textContent = `ENV: ${envName}`;
+  }
+  const bugLink = document.getElementById('add-bug-link');
+  if (bugLink && typeof window !== 'undefined') {
+    const title = encodeURIComponent(`[TriBecca v${APP_VERSION}] Bug report`);
+    const body = encodeURIComponent(
+      `**Permalink**: ${window.location.href}\n**Version**: v${APP_VERSION}\n**ENV**: ${envName}\n\n### Cosa è successo?\n`
+    );
+    bugLink.href = `https://github.com/palladius/tribecca/issues/new?title=${title}&body=${body}`;
+  }
+}
+
 function initTriBeccaApp() {
+  const pageState = createPageState(UI_STATE_STORAGE_KEY, {
+    view: 'split',
+    theme: 'tricolore',
+    mode: '1v2',
+    elim: 'destroy',
+    rot: 'every_turn',
+    autostart: '0',
+  });
+  const initialState = pageState.read();
+  updateCarlessianFooterLinks();
+
   const bus = new GameEventBus();
   const ctx = new GameContext(bus);
 
@@ -57,10 +130,10 @@ function initTriBeccaApp() {
       promoAvatarEl.src = seat.avatar;
     }
     if (promoTitleEl) {
-      promoTitleEl.textContent = `👑 Promozione Pedone (${from} → ${to})!`;
+      promoTitleEl.innerHTML = `${svgIcon('crown', 18)} <span>Promozione Pedone (${from} → ${to})</span>`;
     }
     if (promoSubtitleEl) {
-      promoSubtitleEl.textContent = `${seat?.shortName || meta?.labelIt}: scegli in quale pezzo trasformare il tuo Pedone ${meta?.badge || ''}:`;
+      promoSubtitleEl.textContent = `${seat?.shortName || meta?.labelIt}: scegli in quale pezzo trasformare il tuo Pedone:`;
     }
     const iconColor =
       piece.color === 'white' ? '#f8fafc' : piece.color === 'red' ? '#f87171' : '#4ade80';
@@ -99,7 +172,6 @@ function initTriBeccaApp() {
   const handleSquareClick = (squareId) => {
     const selectedSq = rules.selectedSquare;
 
-    // If a piece of the active turn is already selected and user clicks a legal destination -> execute move!
     if (selectedSq && selectedSq !== squareId) {
       const selPiece = rules.getPiece(selectedSq);
       const isTurnPiece = selPiece && selPiece.color === rules.getActiveColor() && !selPiece.isFlotsam;
@@ -126,7 +198,6 @@ function initTriBeccaApp() {
       }
     }
 
-    // Otherwise: select or inspect the clicked piece (illuminates all branching rays!)
     if (selectedSq === squareId) {
       rules.selectSquare(null);
     } else if (rules.getPiece(squareId)) {
@@ -142,8 +213,14 @@ function initTriBeccaApp() {
   const puffinWidget = document.getElementById('puffin-widget');
   const btnMultiLogin = document.getElementById('btn-multilogin-table');
   const btnClaimWinner = document.getElementById('btn-claim-winner-login');
+  const welcomeDialog = document.getElementById('welcome-dialog');
+  const welcomeGreetingEl = document.getElementById('welcome-login-greeting');
+  const welcomeGreetingTextEl = document.getElementById('welcome-login-greeting-text');
+  const welcomeProgBtnLabelEl = document.getElementById('welcome-progressive-btn-label');
+
   let activeAuthTargetColor = null;
   let multiLoginQueueActive = false;
+  let reopenWelcomeAfterPuffin = false;
   let lastSubmittedScoreId = null;
   let lastWinnerColor = null;
 
@@ -203,28 +280,91 @@ function initTriBeccaApp() {
     } catch (_) {}
   }
 
+  /**
+   * Opens the Welcome / Setup `<dialog>` in the Top Layer and blocks AI moves while open.
+   */
+  function openWelcomeDialog() {
+    if (!welcomeDialog) return;
+    seats.setModalBlocking(true);
+    syncSeatSelectorsUI();
+    if (!welcomeDialog.open && typeof welcomeDialog.showModal === 'function') {
+      welcomeDialog.showModal();
+    }
+  }
+
+  /**
+   * Closes the Welcome `<dialog>` and starts/resumes the game.
+   */
+  function closeWelcomeAndStartGame() {
+    reopenWelcomeAfterPuffin = false;
+    if (welcomeDialog?.open) {
+      welcomeDialog.close('start');
+    }
+    seats.setModalBlocking(false);
+    pageState.write({ autostart: '1' });
+  }
+
+  /**
+   * Opens PuffinLogin modal safely even if `#welcome-dialog` is currently in the Top Layer
+   * (temporarily closing `#welcome-dialog` so Top Layer `inert` does not block `<puffin-login>`).
+   */
+  function openPuffinModalForSeat(targetColor = null, preselectProfileId = null, continueQueue = false) {
+    activeAuthTargetColor = targetColor;
+    multiLoginQueueActive = continueQueue;
+
+    if (welcomeDialog?.open) {
+      reopenWelcomeAfterPuffin = true;
+      welcomeDialog.close('puffin-auth');
+      seats.setModalBlocking(true);
+    }
+
+    const nextOpenColor = targetColor || seats.getNextOpenProgressiveColor() || 'white';
+    const currentSeat = seats.getSeat(nextOpenColor);
+    const defaultCandidate =
+      preselectProfileId ||
+      (currentSeat && seats.requiresAuth(currentSeat.profileId)
+        ? currentSeat.profileId
+        : nextOpenColor === 'white'
+          ? 'riccardo'
+          : nextOpenColor === 'red'
+            ? 'ale'
+            : 'seby');
+
+    if (puffinWidget && typeof puffinWidget.openModal === 'function') {
+      puffinWidget.openModal(defaultCandidate);
+    }
+  }
+
   function promptSeatLogin(color, continueQueue = false) {
     const seat = seats.getSeat(color);
-    if (!seat || seat.kind !== 'human' || !seats.requiresAuth(seat.profileId)) return;
-    activeAuthTargetColor = color;
-    multiLoginQueueActive = continueQueue;
+    const candidateProfile =
+      seat && seats.requiresAuth(seat.profileId)
+        ? seat.profileId
+        : color === 'white'
+          ? 'riccardo'
+          : color === 'red'
+            ? 'ale'
+            : 'seby';
     const colorLabel = SECTOR_META[color]?.labelIt || color;
     showTacticalToast(
-      `🔐 <strong>Multi-Login (${colorLabel}):</strong> Inserisci PIN/Password per <strong>${seat.displayName}</strong> (oppure scegli Ospite)`,
+      `${svgIcon('key', 16)} <span><strong>Login (${colorLabel}):</strong> Inserisci PIN/Password per <strong>${PUFFIN_SEAT_PROFILES[candidateProfile]?.displayName || colorLabel}</strong></span>`,
       'toast-mate',
       3500
     );
-    if (puffinWidget && typeof puffinWidget.openModal === 'function') {
-      puffinWidget.openModal(seat.profileId);
-    }
+    openPuffinModalForSeat(color, candidateProfile, continueQueue);
   }
 
   function startTableMultiLoginQueue() {
     const unverified = seats.getUnverifiedHumanSeats();
     if (unverified.length === 0) {
+      const nextColor = seats.getNextOpenProgressiveColor();
+      if (nextColor) {
+        promptSeatLogin(nextColor, false);
+        return;
+      }
       const named = seats.getNamedHumanSeats();
       showTacticalToast(
-        `✅ <strong>Tutti i ${named.length} giocatori umani al tavolo sono già autenticati!</strong> Modalità NON-Guest attiva.`,
+        `${svgIcon('shieldCheck', 16)} <span><strong>Tutti i ${named.length} giocatori al tavolo sono autenticati!</strong> Modalità NON-Guest attiva.</span>`,
         'toast-mate',
         2600
       );
@@ -235,11 +375,15 @@ function initTriBeccaApp() {
 
   // View Mode Switcher ('3d' | '2d' | 'split')
   const stageEl = document.getElementById('game-stage');
-  const setViewMode = (mode) => {
-    stageEl.dataset.viewMode = mode;
+  const setViewMode = (mode, persist = true) => {
+    const validMode = ['split', '3d', '2d'].includes(mode) ? mode : 'split';
+    stageEl.dataset.viewMode = validMode;
     document.querySelectorAll('[data-view-btn]').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.viewBtn === mode);
+      const isAct = btn.dataset.viewBtn === validMode;
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-pressed', String(isAct));
     });
+    if (persist) pageState.write({ view: validMode });
     setTimeout(() => {
       view3D.resize();
       view2D.render();
@@ -247,18 +391,27 @@ function initTriBeccaApp() {
   };
 
   document.querySelectorAll('[data-view-btn]').forEach((btn) => {
-    btn.addEventListener('click', () => setViewMode(btn.dataset.viewBtn));
+    btn.addEventListener('click', () => setViewMode(btn.dataset.viewBtn, true));
   });
 
   // Theme Toggle ('tricolore' | 'wood')
   const themeBtn = document.getElementById('btn-theme-toggle');
+  const themeBtnLabel = document.getElementById('theme-btn-label');
+  const applyBoardTheme = (theme, persist = true) => {
+    const validTheme = theme === 'wood' ? 'wood' : 'tricolore';
+    view3D.setTheme(validTheme);
+    view2D.setTheme(validTheme);
+    if (themeBtnLabel) {
+      themeBtnLabel.textContent =
+        validTheme === 'tricolore' ? 'Tema: Tricolore' : 'Tema: Legno Vera';
+    }
+    if (persist) pageState.write({ theme: validTheme });
+    updateTurnAndSeatsHud();
+  };
+
   themeBtn?.addEventListener('click', () => {
     const nextTheme = view3D.boardTheme === 'tricolore' ? 'wood' : 'tricolore';
-    view3D.setTheme(nextTheme);
-    view2D.setTheme(nextTheme);
-    themeBtn.textContent =
-      nextTheme === 'tricolore' ? '🇮🇹 Tema: Tricolore' : '🪵 Tema: Legno Vera';
-    updateTurnAndSeatsHud();
+    applyBoardTheme(nextTheme, true);
   });
 
   // 120° Rotation Mode Selector
@@ -267,6 +420,7 @@ function initTriBeccaApp() {
     const val = rotSelect.value;
     view3D.rotationMode = val;
     view2D.rotate2DWithTurn = val === 'every_turn';
+    pageState.write({ rot: val });
   });
 
   // Quick Camera Angle Buttons (0°, 120°, 240°)
@@ -278,7 +432,7 @@ function initTriBeccaApp() {
     });
   });
 
-  // Seat Profile Selectors (White, Red, Green <=> Papino, Ale, Seby, Kate, Nonna, Ospite, Computer)
+  // Seat Profile Selectors (Both in Top Bar AND inside Welcome Dialog)
   for (const color of PLAYER_COLORS) {
     const sel = document.getElementById(`seat-select-${color}`);
     sel?.addEventListener('change', () => {
@@ -288,10 +442,18 @@ function initTriBeccaApp() {
       }
     });
 
+    const welcomeSel = document.getElementById(`welcome-seat-select-${color}`);
+    welcomeSel?.addEventListener('change', () => {
+      seats.setSeatProfile(color, welcomeSel.value);
+      if (seats.requiresAuth(welcomeSel.value) && !seats.isProfileVerified(welcomeSel.value)) {
+        openPuffinModalForSeat(color, welcomeSel.value, false);
+      }
+    });
+
     const authBtn = document.getElementById(`seat-auth-btn-${color}`);
     authBtn?.addEventListener('click', () => {
       const seat = seats.getSeat(color);
-      if (seat?.kind === 'human' && seats.requiresAuth(seat.profileId)) {
+      if (seat?.kind === 'human') {
         promptSeatLogin(color, false);
       }
     });
@@ -301,18 +463,66 @@ function initTriBeccaApp() {
     startTableMultiLoginQueue();
   });
 
+  document.getElementById('btn-open-welcome-dialog')?.addEventListener('click', () => {
+    openWelcomeDialog();
+  });
+
+  document.getElementById('btn-welcome-close')?.addEventListener('click', () => {
+    closeWelcomeAndStartGame();
+  });
+
+  document.getElementById('btn-welcome-start-game')?.addEventListener('click', () => {
+    closeWelcomeAndStartGame();
+  });
+
+  welcomeDialog?.addEventListener('close', () => {
+    if (!reopenWelcomeAfterPuffin) {
+      seats.setModalBlocking(false);
+    }
+  });
+
+  // Progressive Family Login button inside `#welcome-dialog`
+  document.getElementById('btn-welcome-progressive-login')?.addEventListener('click', () => {
+    const nextColor = seats.getNextOpenProgressiveColor() || 'white';
+    openPuffinModalForSeat(nextColor, null, false);
+  });
+
+  // Reset to Guest vs 2 CPU inside `#welcome-dialog`
+  document.getElementById('btn-welcome-reset-guest')?.addEventListener('click', () => {
+    seats.clearVerifiedProfiles();
+    seats.applyPreset('guest_1v2', 'guest');
+    if (welcomeGreetingEl) welcomeGreetingEl.classList.remove('has-Read');
+    if (welcomeGreetingTextEl) {
+      welcomeGreetingTextEl.innerHTML =
+        'Configurazione resettata: <strong>Giocatore 1 = Ospite</strong> contro <strong>2 Computer</strong>. Fai Login Famiglia per assegnare i posti in ordine!';
+    }
+    pageState.write({ mode: '1v2' });
+    syncSeatSelectorsUI();
+  });
+
+  // Mode radio buttons inside `#welcome-dialog`
+  document.querySelectorAll('[data-welcome-mode]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const wMode = btn.dataset.welcomeMode;
+      seats.applyPreset(wMode, 'guest');
+      const shortMode = wMode.replace('guest_', '');
+      pageState.write({ mode: shortMode });
+      syncSeatSelectorsUI();
+    });
+  });
+
   btnClaimWinner?.addEventListener('click', () => {
     if (lastWinnerColor) {
       promptSeatLogin(lastWinnerColor, false);
     }
   });
 
-  // Preset Combo Buttons (1v2, 2v1, 3v0, 0v3)
+  // Preset Combo Buttons in second bar (`1v2`, `2v1`, `3v0`, `0v3`)
   document.querySelectorAll('[data-preset-btn]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const currentUser = PuffinLogin.getCurrentUser();
       const preset = btn.dataset.presetBtn;
-      seats.applyPreset(preset, currentUser?.id || 'riccardo');
+      seats.applyPreset(preset, 'guest');
+      pageState.write({ mode: preset });
       syncSeatSelectorsUI();
       if (preset !== '0v3' && seats.getUnverifiedHumanSeats().length > 0) {
         startTableMultiLoginQueue();
@@ -324,6 +534,7 @@ function initTriBeccaApp() {
   const elimSelect = document.getElementById('select-elimination-mode');
   elimSelect?.addEventListener('change', () => {
     rules.setEliminationMode(elimSelect.value);
+    pageState.write({ elim: elimSelect.value });
   });
 
   // Auto-Play Controls (Pause/Play, Step, Speed)
@@ -352,27 +563,42 @@ function initTriBeccaApp() {
       rules.selectSquare(suggested.from);
       const inspectorEl = document.getElementById('ray-inspector-banner');
       if (inspectorEl) {
-        inspectorEl.innerHTML = `💡 <strong>Consiglio del Maestro per ${SECTOR_META[activeColor].labelIt}:</strong> Muovi <strong>${PIECE_NAMES_IT[suggested.piece.type]}</strong> da <code>${suggested.from}</code> a <code>${suggested.to}</code> (${suggested.path.join(' → ')})!`;
+        inspectorEl.innerHTML = `${svgIcon('lightbulb', 16)} <span><strong>Consiglio per ${SECTOR_META[activeColor].labelIt}:</strong> Muovi <strong>${PIECE_NAMES_IT[suggested.piece.type]}</strong> da <code>${suggested.from}</code> a <code>${suggested.to}</code> (${suggested.path.join(' → ')})</span>`;
       }
     }
   });
 
   const btnEditor = document.getElementById('btn-editor-mode');
+  const editorBtnLabel = document.getElementById('editor-btn-label');
   btnEditor?.addEventListener('click', () => {
     rules.editorMode = !rules.editorMode;
     btnEditor.classList.toggle('active', rules.editorMode);
-    btnEditor.textContent = rules.editorMode
-      ? '🛠️ Specchio Scacchiera: ON (Muovi Libero)'
-      : '🛠️ Specchio Scacchiera Vera';
+    if (editorBtnLabel) {
+      editorBtnLabel.textContent = rules.editorMode
+        ? 'Specchio Scacchiera: ON'
+        : 'Specchio Scacchiera';
+    }
     updateTurnAndSeatsHud();
   });
 
   document.getElementById('btn-new-game')?.addEventListener('click', () => {
     document.getElementById('hof-section')?.setAttribute('hidden', '');
     rules.resetGame('white');
+    openWelcomeDialog();
   });
 
-  // React to PuffinLogin authentication event (`puffin-auth-updated`) for Multi-Login!
+  // If the user closes `<puffin-login>`'s internal `<dialog>` (either after login or via Cancel/Esc),
+  // re-open `#welcome-dialog` if they launched login from the Welcome Screen!
+  if (puffinWidget?.$dialog) {
+    puffinWidget.$dialog.addEventListener('close', () => {
+      if (reopenWelcomeAfterPuffin) {
+        reopenWelcomeAfterPuffin = false;
+        openWelcomeDialog();
+      }
+    });
+  }
+
+  // React to PuffinLogin authentication event (`puffin-auth-updated`) for Progressive Multi-Login!
   let _suppressAuthCascade = false;
   window.addEventListener('puffin-auth-updated', (e) => {
     if (_suppressAuthCascade) return;
@@ -385,20 +611,25 @@ function initTriBeccaApp() {
       return;
     }
 
+    let progressiveResult = null;
     if (user.id === 'guest') {
       if (activeAuthTargetColor) {
-        seats.setSeatProfile(activeAuthTargetColor, 'guest');
+        progressiveResult = seats.assignNextProgressiveLogin('guest', activeAuthTargetColor);
       }
     } else if (PUFFIN_SEAT_PROFILES[user.id]) {
-      seats.markProfileVerified(user.id);
-      if (activeAuthTargetColor) {
-        seats.setSeatProfile(activeAuthTargetColor, user.id);
-      } else {
-        // If user clicked the top-right PuffinLogin widget directly, assign to White if no seat has this user yet
-        const alreadySeated = PLAYER_COLORS.some((c) => seats.getSeat(c)?.profileId === user.id);
-        if (!alreadySeated) {
-          seats.setSeatProfile('white', user.id);
+      progressiveResult = seats.assignNextProgressiveLogin(user.id, activeAuthTargetColor);
+
+      // Update Welcome Dialog Progressive Greeting Banner ("Ah sei Riccardo? Bene, allora ti do Giocatore 1!")
+      if (progressiveResult) {
+        if (welcomeGreetingEl) welcomeGreetingEl.classList.add('has-Read');
+        if (welcomeGreetingTextEl) {
+          welcomeGreetingTextEl.textContent = progressiveResult.greetingIt;
         }
+        showTacticalToast(
+          `${svgIcon('shieldCheck', 16)} <span><strong>${progressiveResult.greetingIt}</strong></span>`,
+          'toast-mate',
+          3600
+        );
       }
 
       // If this user just logged in to claim a Game Over victory score, upgrade the score in localStorage!
@@ -408,7 +639,7 @@ function initTriBeccaApp() {
           upgradeScoreOwnerInStorage(lastSubmittedScoreId, user.id);
           if (btnClaimWinner) btnClaimWinner.hidden = true;
           showTacticalToast(
-            `🏆 <strong>Vittoria accreditata a ${winSeat.displayName}</strong> nella Hall of Fame!`,
+            `${svgIcon('trophy', 16)} <span><strong>Vittoria accreditata a ${winSeat.displayName}</strong> nella Hall of Fame!</span>`,
             'toast-mate',
             3200
           );
@@ -419,17 +650,22 @@ function initTriBeccaApp() {
     activeAuthTargetColor = null;
     syncSeatSelectorsUI();
 
+    if (reopenWelcomeAfterPuffin && !puffinWidget?.$dialog?.open) {
+      reopenWelcomeAfterPuffin = false;
+      openWelcomeDialog();
+    }
+
     if (multiLoginQueueActive) {
       const remaining = seats.getUnverifiedHumanSeats();
       if (remaining.length > 0) {
         setTimeout(() => {
           promptSeatLogin(remaining[0].color, true);
-        }, 260);
+        }, 320);
       } else {
         multiLoginQueueActive = false;
         const named = seats.getNamedHumanSeats();
         showTacticalToast(
-          `🔓 <strong>Multi-Login completato (${named.length}/${named.length})!</strong> Partita ufficiale NON-Guest abilitata!`,
+          `${svgIcon('shieldCheck', 16)} <span><strong>Multi-Login completato (${named.length}/${named.length})!</strong> Partita ufficiale NON-Guest abilitata!</span>`,
           'toast-mate',
           3400
         );
@@ -443,37 +679,102 @@ function initTriBeccaApp() {
       const sel = document.getElementById(`seat-select-${color}`);
       const avatarImg = document.getElementById(`seat-avatar-${color}`);
       const authBtn = document.getElementById(`seat-auth-btn-${color}`);
+
+      const wCard = document.getElementById(`welcome-seat-card-${color}`);
+      const wSel = document.getElementById(`welcome-seat-select-${color}`);
+      const wAvatar = document.getElementById(`welcome-seat-avatar-${color}`);
+      const wBadge = document.getElementById(`welcome-seat-badge-${color}`);
+
       if (sel && seat) sel.value = seat.profileId;
-      if (avatarImg && seat) avatarImg.src = seat.avatar;
-      if (authBtn && seat) {
-        if (seat.kind === 'cpu') {
-          authBtn.className = 'seat-auth-pill neutral';
-          authBtn.textContent = '🤖 Auto';
-        } else if (seat.profileId === 'guest') {
-          authBtn.className = 'seat-auth-pill neutral';
-          authBtn.textContent = '🐧 Guest';
-        } else if (seats.isProfileVerified(seat.profileId)) {
-          authBtn.className = 'seat-auth-pill verified';
-          authBtn.textContent = '✅ Loggato';
-        } else {
-          authBtn.className = 'seat-auth-pill unverified';
-          authBtn.textContent = '🔒 Login';
+      if (wSel && seat) wSel.value = seat.profileId;
+      if (avatarImg && seat) {
+        avatarImg.src = seat.avatar;
+        avatarImg.style.borderColor = seat.badgeColor || '#94a3b8';
+      }
+      if (wAvatar && seat) {
+        wAvatar.src = seat.avatar;
+        wAvatar.style.borderColor = seat.badgeColor || '#94a3b8';
+      }
+
+      if (seat) {
+        const isVer = seats.isProfileVerified(seat.profileId);
+        const isNamed = seats.requiresAuth(seat.profileId);
+
+        if (authBtn) {
+          if (seat.kind === 'cpu') {
+            authBtn.className = 'seat-auth-pill neutral';
+            authBtn.innerHTML = `${svgIcon('bot', 12)} <span>CPU</span>`;
+          } else if (seat.profileId === 'guest') {
+            authBtn.className = 'seat-auth-pill neutral';
+            authBtn.innerHTML = `${svgIcon('user', 12)} <span>Ospite</span>`;
+          } else if (isVer) {
+            authBtn.className = 'seat-auth-pill verified';
+            authBtn.innerHTML = `${svgIcon('check', 12)} <span>Loggato</span>`;
+          } else {
+            authBtn.className = 'seat-auth-pill unverified';
+            authBtn.innerHTML = `${svgIcon('lock', 12)} <span>Login</span>`;
+          }
+        }
+
+        if (wCard && wBadge) {
+          wCard.classList.toggle('is-verified', isNamed && isVer);
+          if (seat.kind === 'cpu') {
+            wBadge.className = 'num-chip num-chip--info';
+            wBadge.textContent = 'CPU';
+          } else if (seat.profileId === 'guest') {
+            wBadge.className = 'num-chip num-chip--info';
+            wBadge.textContent = 'Ospite';
+          } else if (isVer) {
+            wBadge.className = 'num-chip num-chip--ok';
+            wBadge.textContent = 'Loggato ✓';
+          } else {
+            wBadge.className = 'num-chip num-chip--warn';
+            wBadge.textContent = 'Da autenticare';
+          }
         }
       }
     }
+
+    // Update Progressive Login CTA button label in `#welcome-dialog`
+    if (welcomeProgBtnLabelEl) {
+      const nextColor = seats.getNextOpenProgressiveColor();
+      if (!nextColor) {
+        welcomeProgBtnLabelEl.textContent = 'Tutti e 3 i Giocatori Loggati (Cambia Giocatore)';
+      } else {
+        const nextNum = PLAYER_COLORS.indexOf(nextColor) + 1;
+        const nextArmy = SECTOR_META[nextColor]?.labelIt || nextColor;
+        welcomeProgBtnLabelEl.textContent =
+          nextNum === 1
+            ? `Fai Login Famiglia (Assegna Giocatore 1 · ${nextArmy})`
+            : `Aggiungi ${nextNum}° Giocatore (Fai Login per Giocatore ${nextNum} · ${nextArmy})`;
+      }
+    }
+
+    // Highlight active preset in both bars
+    document.querySelectorAll('[data-preset-btn]').forEach((btn) => {
+      const isAct = btn.dataset.presetBtn === seats.activePreset;
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-pressed', String(isAct));
+    });
+    document.querySelectorAll('[data-welcome-mode]').forEach((btn) => {
+      const modeNorm = btn.dataset.welcomeMode.replace('guest_', '');
+      const isAct = modeNorm === seats.activePreset;
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-pressed', String(isAct));
+    });
 
     if (btnMultiLogin) {
       const named = seats.getNamedHumanSeats();
       const verifiedCount = named.filter((s) => s.verified).length;
       if (named.length === 0) {
         btnMultiLogin.className = 'multilogin-btn all-verified';
-        btnMultiLogin.textContent = '🤖 Tavolo Auto/Guest';
+        btnMultiLogin.innerHTML = `${svgIcon('user', 14)} <span>Ospite / CPU (Fai Login)</span>`;
       } else if (verifiedCount === named.length) {
         btnMultiLogin.className = 'multilogin-btn all-verified';
-        btnMultiLogin.textContent = `✅ Multi-Login (${verifiedCount}/${named.length} OK)`;
+        btnMultiLogin.innerHTML = `${svgIcon('shieldCheck', 14)} <span>Multi-Login (${verifiedCount}/${named.length} OK)</span>`;
       } else {
         btnMultiLogin.className = 'multilogin-btn needs-auth';
-        btnMultiLogin.textContent = `🔑 Multi-Login (${verifiedCount}/${named.length} Loggati)`;
+        btnMultiLogin.innerHTML = `${svgIcon('key', 14)} <span>Multi-Login (${verifiedCount}/${named.length} Loggati)</span>`;
       }
     }
 
@@ -484,14 +785,7 @@ function initTriBeccaApp() {
     const activeColor = rules.getActiveColor();
     const seat = seats.getSeat(activeColor);
     const turnBanner = document.getElementById('active-turn-banner');
-    const colorDot =
-      activeColor === 'white'
-        ? '⚪'
-        : activeColor === 'red'
-          ? '🔴'
-          : view3D.boardTheme === 'wood'
-            ? '⚫'
-            : '🟢';
+    const dotHtml = armyDotHtml(activeColor, view3D.boardTheme);
     const colorLabel =
       activeColor === 'green' && view3D.boardTheme === 'wood'
         ? 'Nero'
@@ -511,12 +805,12 @@ function initTriBeccaApp() {
       if (rules.isGameOver) {
         const winSeat = rules.winnerColor ? seats.getSeat(rules.winnerColor) : null;
         const winAv = winSeat?.avatar || avatarSrc;
-        turnBanner.innerHTML = `<img src="${winAv}" alt="Vincitore" class="turn-pill-avatar" /> <span>🏁 <strong>${rules.gameOverReason}</strong></span>`;
+        turnBanner.innerHTML = `<img src="${winAv}" alt="Vincitore" class="turn-pill-avatar" /> ${svgIcon('trophy', 15)} <span><strong>${rules.gameOverReason}</strong></span>`;
       } else if (rules.editorMode) {
-        turnBanner.innerHTML = `🛠️ <strong>Modalità Specchio Scacchiera Vera:</strong> Clicca qualsiasi pezzo per vedere i raggi o spostarlo liberamente`;
+        turnBanner.innerHTML = `${svgIcon('wrench', 15)} <span><strong>Modalità Specchio Scacchiera:</strong> Sposta liberamente i pezzi</span>`;
       } else {
         const inCheck = rules.isKingInCheck(activeColor);
-        turnBanner.innerHTML = `<img src="${avatarSrc}" alt="${seat?.shortName || colorLabel}" class="turn-pill-avatar" style="border-color:${borderHex}" /> <span>Tocca a: <strong>${seat?.shortName || colorLabel}</strong> (${colorDot} ${colorLabel}) ${inCheck ? '<span class="check-badge">⚠️ SOTTO SCACCO!</span>' : ''}</span>`;
+        turnBanner.innerHTML = `<img src="${avatarSrc}" alt="${seat?.shortName || colorLabel}" class="turn-pill-avatar" style="border-color:${borderHex}" /> <span>Tocca a: <strong>${seat?.shortName || colorLabel}</strong> (${dotHtml} ${colorLabel}) ${inCheck ? `<span class="check-badge">${svgIcon('shieldAlert', 13)} SOTTO SCACCO</span>` : ''}</span>`;
       }
     }
 
@@ -529,16 +823,15 @@ function initTriBeccaApp() {
     }
     if (stageHeroTitle) {
       stageHeroTitle.textContent = rules.isGameOver
-        ? `🏆 Vincitore: ${ (rules.winnerColor ? seats.getSeat(rules.winnerColor)?.shortName : 'Patta') || '' }`
+        ? `Vincitore: ${(rules.winnerColor ? seats.getSeat(rules.winnerColor)?.shortName : 'Patta') || ''}`
         : `Tocca a: ${seat?.shortName || colorLabel}`;
     }
     if (stageHeroSub) {
-      stageHeroSub.textContent = rules.isGameOver
+      stageHeroSub.innerHTML = rules.isGameOver
         ? rules.gameOverReason
-        : `${colorDot} Armata ${colorLabel}`;
+        : `${dotHtml} <span>Armata ${colorLabel}</span>`;
     }
 
-    // Highlight active seat card
     for (const c of PLAYER_COLORS) {
       const card = document.getElementById(`seat-card-${c}`);
       if (card) {
@@ -547,7 +840,7 @@ function initTriBeccaApp() {
       }
     }
 
-    // Keep top-right <puffin-login> badge synced to the active turn's verified human player!
+    // Keep top-right <puffin-login> badge synced to the active turn's verified human player
     if (
       seat?.kind === 'human' &&
       seats.requiresAuth(seat.profileId) &&
@@ -565,7 +858,9 @@ function initTriBeccaApp() {
     }
 
     if (btnPausePlay) {
-      btnPausePlay.textContent = seats.autoPlayPaused ? '▶️ Riprendi CPU' : '⏸️ Pausa CPU';
+      btnPausePlay.innerHTML = seats.autoPlayPaused
+        ? `${svgIcon('play', 14)} <span>Riprendi CPU</span>`
+        : `${svgIcon('pause', 14)} <span>Pausa CPU</span>`;
     }
   }
 
@@ -577,19 +872,29 @@ function initTriBeccaApp() {
     const captureCount = moves.filter((m) => m.captured).length;
     const colorName = SECTOR_META[piece.color]?.labelIt || piece.color;
 
-    const extras = [];
-    if (rosetteCount > 0) extras.push(`🔵 <strong>${rosetteCount} attraverso la Rosetta</strong>`);
-    if (captureCount > 0) extras.push(`🔴 <strong>${captureCount} catture</strong>`);
-    if (forbiddenRosetteSquare)
-      extras.push(`🚫 <code>${forbiddenRosetteSquare}</code> vietata (colore diverso nella Rosetta)`);
+    const badges = [
+      `<span class="num-chip num-chip--info">${rays.length} raggi</span>`,
+      `<span class="num-chip num-chip--ok">${moves.length} mosse</span>`,
+    ];
+    if (rosetteCount > 0) {
+      badges.push(`<span class="num-chip num-chip--warn">${rosetteCount} via Rosetta</span>`);
+    }
+    if (captureCount > 0) {
+      badges.push(`<span class="num-chip num-chip--bad">${captureCount} catture</span>`);
+    }
+    if (forbiddenRosetteSquare) {
+      badges.push(
+        `<span class="num-chip num-chip--bad">${forbiddenRosetteSquare} vietata (colore opposto)</span>`
+      );
+    }
 
-    inspectorEl.innerHTML = `🔦 <strong>${PIECE_NAMES_IT[piece.type]} ${colorName} in <code>${squareId}</code>:</strong> si dipartono <strong>${rays.length} raggi</strong> versando su <strong>${moves.length} caselle legali</strong> ${extras.length ? ' · ' + extras.join(' · ') : ''}`;
+    inspectorEl.innerHTML = `${svgIcon('crosshair', 15)} <span><strong>${PIECE_NAMES_IT[piece.type]} ${colorName} in <code>${squareId}</code>:</strong></span> ${badges.join(' ')}`;
   });
 
   bus.on('SELECTION_CLEARED', () => {
     const inspectorEl = document.getElementById('ray-inspector-banner');
     if (inspectorEl) {
-      inspectorEl.innerHTML = `👆 <strong>Clicca su qualsiasi pezzo</strong> (anche avversario!) per illuminare tutti i raggi e le mosse che si dipartono attraverso la Rosetta centrale.`;
+      inspectorEl.innerHTML = `${svgIcon('crosshair', 15)} <span><strong>Clicca su qualsiasi pezzo</strong> (anche avversario) per illuminare tutti i raggi e le biforcazioni attraverso la Rosetta centrale.</span>`;
     }
   });
 
@@ -620,7 +925,7 @@ function initTriBeccaApp() {
     const defLabel = SECTOR_META[color]?.labelIt || color;
     const atkLabel = SECTOR_META[byColor]?.labelIt || byColor;
     showTacticalToast(
-      `⚠️ <strong>SCACCO AL RE ${defLabel.toUpperCase()}</strong> in <code>${kingSquare}</code> (da ${atkLabel})!`,
+      `${svgIcon('shieldAlert', 16)} <span><strong>SCACCO AL RE ${defLabel.toUpperCase()}</strong> in <code>${kingSquare}</code> (da ${atkLabel})</span>`,
       'toast-check',
       2200
     );
@@ -631,7 +936,7 @@ function initTriBeccaApp() {
     const conqLabel = SECTOR_META[conquerorColor]?.labelIt || conquerorColor;
     const verb = reason === 'stalemate' ? 'Stallo' : 'SCACCO MATTO';
     showTacticalToast(
-      `👑 <strong>${verb}!</strong> L'Armata <strong>${conqLabel}</strong> elimina il Re <strong>${loserLabel}</strong>!`,
+      `${svgIcon('crown', 16)} <span><strong>${verb}!</strong> L'Armata <strong>${conqLabel}</strong> elimina il Re <strong>${loserLabel}</strong></span>`,
       'toast-mate',
       3800
     );
@@ -655,7 +960,7 @@ function initTriBeccaApp() {
     const winLabel = winnerColor ? SECTOR_META[winnerColor]?.labelIt : 'Patta';
 
     showTacticalToast(
-      `👑 <strong>SCACCO MATTO!</strong> ${reason}`,
+      `${svgIcon('crown', 16)} <span><strong>SCACCO MATTO!</strong> ${reason}</span>`,
       'toast-mate',
       0
     );
@@ -663,9 +968,9 @@ function initTriBeccaApp() {
     const hofTitle = document.getElementById('hof-victory-title');
     const hofSub = document.getElementById('hof-victory-subtitle');
     if (hofTitle) {
-      hofTitle.textContent = winnerColor
-        ? `👑 SCACCO MATTO! Vince ${winLabel} (${winSeat?.shortName || 'CPU'})`
-        : '🤝 Partita Patta';
+      hofTitle.innerHTML = winnerColor
+        ? `${svgIcon('crown', 18)} <span>SCACCO MATTO! Vince ${winLabel} (${winSeat?.shortName || 'CPU'})</span>`
+        : 'Partita Patta';
     }
     if (hofSub) {
       hofSub.textContent = `${reason} · ${rules.moveHistory.length} mosse${lastRec ? ' · Ultima mossa: ' + lastRec.notation : ''}`;
@@ -685,7 +990,7 @@ function initTriBeccaApp() {
     if (btnClaimWinner) {
       if (isUnverifiedNamedWinner) {
         btnClaimWinner.hidden = false;
-        btnClaimWinner.textContent = `🔐 Fai Login ora come ${winSeat.displayName} per salvare questa vittoria a tuo nome (non Guest)!`;
+        btnClaimWinner.innerHTML = `${svgIcon('key', 15)} <span>Fai Login ora come ${winSeat.displayName} per salvare questa vittoria a tuo nome!</span>`;
       } else {
         btnClaimWinner.hidden = true;
       }
@@ -709,13 +1014,33 @@ function initTriBeccaApp() {
         },
       });
       lastSubmittedScoreId = submitted?.id || null;
-    } catch (_) {
-      // Offline / guest fallback
-    }
+    } catch (_) {}
   });
+
+  // Hydrate initial state from URL Query / localStorage (`webapp-that-riccardo-likes` Section 7)
+  setViewMode(initialState.view || 'split', false);
+  applyBoardTheme(initialState.theme || 'tricolore', false);
+  if (initialState.elim && elimSelect) {
+    elimSelect.value = initialState.elim;
+    rules.setEliminationMode(initialState.elim);
+  }
+  if (initialState.rot && rotSelect) {
+    rotSelect.value = initialState.rot;
+    view3D.rotationMode = initialState.rot;
+    view2D.rotate2DWithTurn = initialState.rot === 'every_turn';
+  }
+  if (initialState.mode) {
+    seats.applyPreset(initialState.mode, 'guest');
+  }
 
   syncSeatSelectorsUI();
   updateTurnAndSeatsHud();
+
+  // Show the Start-of-Game Welcome & Progressive Multi-Login Setup Dialog by default unless ?autostart=1
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('autostart') !== '1') {
+    openWelcomeDialog();
+  }
 
   // Expose debug handle for automated verification & tests
   window.__TRIBECCA__ = {
@@ -730,6 +1055,8 @@ function initTriBeccaApp() {
     setViewMode,
     handleSquareClick,
     openPromotionModal,
+    openWelcomeDialog,
+    closeWelcomeAndStartGame,
   };
 }
 

@@ -228,13 +228,13 @@ export class Board2DView {
 
     // 3 Sector colored rim bars
     const sectorRimColors = [
-      { deg1: 120, deg2: 60, color: '#f8fafc', label: '⚪ BIANCO (A..H)' },
-      { deg1: 240, deg2: 180, color: '#ef4444', label: '🔴 ROSSO (L..I, D..A)' },
+      { deg1: 120, deg2: 60, color: '#f8fafc', label: 'BIANCO (A..H)' },
+      { deg1: 240, deg2: 180, color: '#ef4444', label: 'ROSSO (L..I, D..A)' },
       {
         deg1: 360,
         deg2: 300,
         color: this.boardTheme === 'wood' ? '#a8a29e' : '#22c55e',
-        label: this.boardTheme === 'wood' ? '⚫ NERO (H..E, I..L)' : '🟢 VERDE (H..E, I..L)',
+        label: this.boardTheme === 'wood' ? 'NERO (H..E, I..L)' : 'VERDE (H..E, I..L)',
       },
     ];
     for (const rim of sectorRimColors) {
@@ -502,19 +502,37 @@ export class Board2DView {
       }
     }
 
-    // 4. Draw forbidden opposite-color Rosette badge [01:15] / [01:22]
+    // 4. Draw forbidden opposite-color Rosette badge [01:15] / [01:22] with crisp vector no-entry icon
     if (forbiddenRosetteSquare) {
       const fSq = this.topology.getSquare(forbiddenRosetteSquare);
       if (fSq) {
-        const fTxt = document.createElementNS(SVG_NS, 'text');
-        fTxt.setAttribute('x', fSq.center.x.toFixed(3));
-        fTxt.setAttribute('y', fSq.center.z.toFixed(3));
-        fTxt.setAttribute('text-anchor', 'middle');
-        fTxt.setAttribute('dominant-baseline', 'central');
-        fTxt.setAttribute('font-size', '0.38');
-        fTxt.style.pointerEvents = 'none';
-        fTxt.textContent = '🚫';
-        this.raysLayer.appendChild(fTxt);
+        const fg = document.createElementNS(SVG_NS, 'g');
+        fg.setAttribute(
+          'transform',
+          `translate(${fSq.center.x.toFixed(3)}, ${fSq.center.z.toFixed(3)})`
+        );
+        fg.style.pointerEvents = 'none';
+
+        const ring = document.createElementNS(SVG_NS, 'circle');
+        ring.setAttribute('cx', '0');
+        ring.setAttribute('cy', '0');
+        ring.setAttribute('r', '0.24');
+        ring.setAttribute('fill', 'rgba(15, 23, 42, 0.78)');
+        ring.setAttribute('stroke', '#ef4444');
+        ring.setAttribute('stroke-width', '0.055');
+        fg.appendChild(ring);
+
+        const slash = document.createElementNS(SVG_NS, 'line');
+        slash.setAttribute('x1', '-0.16');
+        slash.setAttribute('y1', '-0.16');
+        slash.setAttribute('x2', '0.16');
+        slash.setAttribute('y2', '0.16');
+        slash.setAttribute('stroke', '#ef4444');
+        slash.setAttribute('stroke-width', '0.055');
+        slash.setAttribute('stroke-linecap', 'round');
+        fg.appendChild(slash);
+
+        this.raysLayer.appendChild(fg);
       }
     }
   }
@@ -577,7 +595,6 @@ export class Board2DView {
         color: 'white',
         deg: 90,
         radius: 6.82,
-        dot: '⚪',
         armyLabel: 'Bianco',
         strokeColor: '#f8fafc',
       },
@@ -585,7 +602,6 @@ export class Board2DView {
         color: 'red',
         deg: 210,
         radius: 6.58,
-        dot: '🔴',
         armyLabel: 'Rosso',
         strokeColor: '#ef4444',
       },
@@ -593,7 +609,6 @@ export class Board2DView {
         color: 'green',
         deg: 330,
         radius: 6.58,
-        dot: this.boardTheme === 'wood' ? '⚫' : '🟢',
         armyLabel: this.boardTheme === 'wood' ? 'Nero' : 'Verde',
         strokeColor: this.boardTheme === 'wood' ? '#a8a29e' : '#22c55e',
       },
@@ -678,41 +693,49 @@ export class Board2DView {
       avatarRing.setAttribute('stroke-width', isTurn ? '0.065' : '0.045');
       g.appendChild(avatarRing);
 
-      const authBadge =
-        seat.kind === 'human' && this.seats?.requiresAuth?.(seat.profileId)
-          ? this.seats.isProfileVerified(seat.profileId)
-            ? ' ✅'
-            : ' 🔒'
-          : '';
+      // Army color dot inside medallion
+      const armyDot = document.createElementNS(SVG_NS, 'circle');
+      armyDot.setAttribute('cx', '-0.55');
+      armyDot.setAttribute('cy', '-0.13');
+      armyDot.setAttribute('r', '0.09');
+      armyDot.setAttribute('fill', cfg.strokeColor);
+      armyDot.setAttribute('stroke', '#0f172a');
+      armyDot.setAttribute('stroke-width', '0.025');
+      g.appendChild(armyDot);
 
-      // Top text: Player name (e.g. "Ale 🐉 ✅", "Seby 🐴 ✅", "Papino 🦖 ✅")
+      const isVerifiedNamed =
+        seat.kind === 'human' &&
+        this.seats?.requiresAuth?.(seat.profileId) &&
+        this.seats.isProfileVerified(seat.profileId);
+
+      // Top text: Player name (e.g. "Ale · ✓", "Seby · ✓", "Papino · ✓")
       const nameTxt = document.createElementNS(SVG_NS, 'text');
-      nameTxt.setAttribute('x', '-0.64');
+      nameTxt.setAttribute('x', '-0.38');
       nameTxt.setAttribute('y', '-0.13');
       nameTxt.setAttribute('text-anchor', 'start');
       nameTxt.setAttribute('dominant-baseline', 'central');
-      nameTxt.setAttribute('font-size', '0.29');
+      nameTxt.setAttribute('font-size', '0.28');
       nameTxt.setAttribute('font-weight', '800');
       nameTxt.setAttribute('fill', isTurn ? '#fde047' : '#f8fafc');
-      nameTxt.textContent = `${cfg.dot} ${seat.shortName || cfg.armyLabel}${authBadge}`;
+      nameTxt.textContent = `${seat.shortName || cfg.armyLabel}${isVerifiedNamed ? ' · ✓' : ''}`;
       g.appendChild(nameTxt);
 
-      // Bottom text: Turn status ("👈 TOCCA A TE!" or army label)
+      // Bottom text: Turn status ("TOCCA A TE · Bianco" or army label)
       const statusTxt = document.createElementNS(SVG_NS, 'text');
-      statusTxt.setAttribute('x', '-0.64');
+      statusTxt.setAttribute('x', '-0.62');
       statusTxt.setAttribute('y', '0.22');
       statusTxt.setAttribute('text-anchor', 'start');
       statusTxt.setAttribute('dominant-baseline', 'central');
-      statusTxt.setAttribute('font-size', '0.22');
+      statusTxt.setAttribute('font-size', '0.21');
       statusTxt.setAttribute('font-weight', '800');
       statusTxt.setAttribute(
         'fill',
         isEliminated ? '#f87171' : isTurn ? '#4ade80' : '#94a3b8'
       );
       statusTxt.textContent = isEliminated
-        ? '💀 Eliminato'
+        ? 'ELIMINATO'
         : isTurn
-          ? `👈 TOCCA A TE! (${cfg.armyLabel})`
+          ? `TOCCA A TE (${cfg.armyLabel})`
           : `Armata ${cfg.armyLabel}`;
       g.appendChild(statusTxt);
 

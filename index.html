@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🇮🇹 TriBecca — Scacchi Tricolore 3D a 3 Giocatori</title>
+  <title>TriBecca — Scacchi Tricolore 3D a 3 Giocatori</title>
   <link rel="icon" type="image/png" href="./docs/logo/logo.png" />
   <script type="importmap">
     {
@@ -17,7 +17,7 @@
   <style>
     :root {
       --bg-dark: #090f1d;
-      --panel-bg: rgba(15, 23, 42, 0.92);
+      --panel-bg: rgba(15, 23, 42, 0.94);
       --border-subtle: rgba(148, 163, 184, 0.22);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
@@ -29,7 +29,9 @@
       padding: 0;
     }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1, "zero" 1;
       background: var(--bg-dark);
       color: var(--text-main);
       height: 100vh;
@@ -38,13 +40,115 @@
       overflow: hidden;
     }
 
-    /* Top Header */
+    /* Monochrome SVG Icons (webapp-that-riccardo-likes Section 2 & modern-web-guidance icons) */
+    .ui-svg-icon {
+      display: inline-block;
+      vertical-align: -0.18em;
+      flex: none;
+      pointer-events: none;
+      forced-color-adjust: none;
+    }
+
+    /* Geometric Army Dots (replacing OS circle emojis) */
+    .army-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      vertical-align: middle;
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+    }
+    .army-dot--white {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      box-shadow: 0 0 6px rgba(248, 250, 252, 0.45);
+    }
+    .army-dot--red {
+      background: #ef4444;
+      border-color: #fca5a5;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.45);
+    }
+    .army-dot--green {
+      background: #22c55e;
+      border-color: #86efac;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.45);
+    }
+    .army-dot--ebony {
+      background: #44403c;
+      border-color: #d6d3d1;
+    }
+
+    /* Soft-Tinted Numeric Micro-Badges (webapp-that-riccardo-likes Section 3.3) */
+    .num-chip {
+      display: inline-block;
+      min-width: 44px;
+      text-align: center;
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .num-chip--ok {
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      color: #34d399;
+    }
+    .num-chip--info {
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+    }
+    .num-chip--warn {
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      color: #fbbf24;
+    }
+    .num-chip--bad {
+      background: rgba(244, 63, 94, 0.14);
+      border: 1px solid rgba(244, 63, 94, 0.28);
+      color: #fb7185;
+    }
+
+    /* Joined Segmented Radio Control (webapp-that-riccardo-likes Section 8) */
+    .segmented-group {
+      display: inline-flex;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .segmented-group button {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .segmented-group button:hover {
+      color: var(--text-main);
+      background: rgba(51, 65, 85, 0.5);
+    }
+    .segmented-group button.active {
+      background: #252f42;
+      color: var(--accent-gold);
+      box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.45);
+      font-weight: 700;
+    }
+
+    /* Top Carlessian Header */
     .hud-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 8px 14px;
+      padding: 7px 14px;
       background: var(--panel-bg);
       border-bottom: 1px solid var(--border-subtle);
       flex-wrap: wrap;
@@ -54,51 +158,59 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      text-decoration: none;
+      color: inherit;
     }
     .brand-logo {
-      width: 42px;
-      height: 42px;
+      width: 38px;
+      height: 38px;
       border-radius: 8px;
       object-fit: cover;
       border: 1.5px solid var(--accent-gold);
     }
     .brand-title {
-      font-size: 1.08rem;
+      font-size: 1.04rem;
       font-weight: 800;
       letter-spacing: 0.01em;
+      background: linear-gradient(90deg, #f8fafc 0%, #fde047 55%, #4ade80 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
     .brand-subtitle {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
     }
 
     .turn-pill {
       display: inline-flex;
       align-items: center;
-      gap: 9px;
-      padding: 4px 14px 4px 6px;
+      gap: 8px;
+      padding: 3px 13px 3px 5px;
       background: rgba(30, 41, 59, 0.96);
       border: 1.5px solid rgba(250, 204, 21, 0.65);
       border-radius: 999px;
-      font-size: 0.9rem;
-      box-shadow: 0 0 14px rgba(250, 204, 21, 0.2);
+      font-size: 0.86rem;
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.18);
     }
     .turn-pill-avatar {
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--accent-gold);
-      box-shadow: 0 0 8px rgba(250, 204, 21, 0.45);
       flex-shrink: 0;
     }
     .check-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       margin-left: 6px;
       padding: 2px 7px;
-      background: #dc2626;
+      background: #e11d48;
       color: #fff;
       border-radius: 6px;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 800;
     }
 
@@ -110,13 +222,17 @@
     }
 
     button, select {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       background: #1e293b;
       color: var(--text-main);
       border: 1px solid var(--border-subtle);
       border-radius: 7px;
       padding: 5px 10px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
       transition: all 0.15s ease;
     }
@@ -137,8 +253,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 6px 14px;
-      background: rgba(15, 23, 42, 0.78);
+      padding: 5px 14px;
+      background: rgba(15, 23, 42, 0.82);
       border-bottom: 1px solid var(--border-subtle);
       flex-wrap: wrap;
       z-index: 15;
@@ -146,22 +262,22 @@
     .seats-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       flex-wrap: wrap;
     }
     .seat-card {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 9px;
+      padding: 3px 8px;
       border-radius: 8px;
       background: rgba(30, 41, 59, 0.85);
       border: 1.5px solid transparent;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
     }
     .seat-card.active-turn {
       border-color: var(--accent-gold);
-      box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
       background: rgba(30, 41, 59, 0.98);
     }
     .seat-card.eliminated {
@@ -169,49 +285,50 @@
       text-decoration: line-through;
     }
     .seat-avatar {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      border: 2px solid rgba(255, 255, 255, 0.45);
     }
     .seat-card.active-turn .seat-avatar {
       border-color: var(--accent-gold);
-      box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.55);
     }
     .seat-auth-pill {
       padding: 2px 7px;
       border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 800;
+      font-size: 0.69rem;
+      font-weight: 700;
       cursor: pointer;
     }
     .seat-auth-pill.verified {
-      background: rgba(22, 163, 74, 0.28);
-      border: 1px solid #4ade80;
-      color: #bbf7d0;
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #6ee7b7;
     }
     .seat-auth-pill.unverified {
-      background: rgba(249, 115, 22, 0.28);
-      border: 1px solid #fb923c;
-      color: #fed7aa;
+      background: rgba(245, 158, 11, 0.16);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fcd34d;
     }
     .seat-auth-pill.neutral {
       background: rgba(51, 65, 85, 0.45);
-      border: 1px solid #64748b;
+      border: 1px solid rgba(100, 116, 139, 0.45);
       color: #cbd5e1;
       cursor: default;
     }
     .multilogin-btn.all-verified {
-      background: rgba(22, 163, 74, 0.3);
-      border-color: #4ade80;
-      color: #dcfce7;
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #6ee7b7;
     }
     .multilogin-btn.needs-auth {
-      background: rgba(249, 115, 22, 0.32);
-      border-color: #fb923c;
-      color: #ffedd5;
+      background: rgba(245, 158, 11, 0.18);
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #fde68a;
     }
+
     #stage-turn-hero-card {
       position: absolute;
       top: 10px;
@@ -228,8 +345,8 @@
       pointer-events: none;
     }
     #stage-turn-avatar {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--accent-gold);
@@ -282,8 +399,11 @@
       position: absolute;
       top: 8px;
       left: 10px;
-      padding: 3px 8px;
-      background: rgba(15, 23, 42, 0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      background: rgba(15, 23, 42, 0.82);
       border: 1px solid var(--border-subtle);
       border-radius: 6px;
       font-size: 0.72rem;
@@ -292,26 +412,30 @@
       z-index: 5;
     }
 
-    /* Bottom Ray Inspector & Action Dock */
+    /* Bottom Ray Inspector & Action Dock + Carlessian Footer */
     .hud-bottombar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 8px 14px;
+      padding: 6px 14px;
       background: var(--panel-bg);
       border-top: 1px solid var(--border-subtle);
       flex-wrap: wrap;
       z-index: 20;
     }
     #ray-inspector-banner {
-      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
       color: #e2e8f0;
       flex: 1;
       min-width: 240px;
     }
     #ray-inspector-banner code {
-      background: rgba(250, 204, 21, 0.18);
+      background: rgba(250, 204, 21, 0.16);
       color: #fde047;
       padding: 1px 5px;
       border-radius: 4px;
@@ -324,16 +448,57 @@
       flex-wrap: wrap;
     }
 
+    /* Carlessian Footer (webapp-that-riccardo-likes Section 11) */
+    .carlessian-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 3px 14px;
+      background: #060a14;
+      border-top: 1px solid rgba(148, 163, 184, 0.14);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      z-index: 20;
+    }
+    .carlessian-footer a {
+      color: #cbd5e1;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .carlessian-footer a:hover {
+      color: var(--accent-gold);
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .env-badge {
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(51, 65, 85, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.66rem;
+      color: #94a3b8;
+    }
+
     /* Tactical Check / Checkmate Toast Banner */
     #tactical-toast {
       position: fixed;
-      top: 108px;
+      top: 104px;
       left: 50%;
       transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       padding: 8px 18px;
       border-radius: 999px;
-      font-size: 0.92rem;
-      font-weight: 800;
+      font-size: 0.88rem;
+      font-weight: 700;
       letter-spacing: 0.01em;
       z-index: 80;
       pointer-events: none;
@@ -344,14 +509,217 @@
       display: none !important;
     }
     #tactical-toast.toast-check {
-      background: linear-gradient(90deg, #991b1b, #dc2626);
+      background: #e11d48;
       color: #fff;
-      border: 1.5px solid #fde047;
+      border: 1.5px solid #fda4af;
     }
     #tactical-toast.toast-mate {
-      background: linear-gradient(90deg, #ca8a04, #eab308);
+      background: #1e293b;
+      color: #fde047;
+      border: 1.5px solid #facc15;
+    }
+
+    /* Native Modal Dialogs (modern-web-guidance: dialog) */
+    dialog:modal {
+      overscroll-behavior: contain;
+    }
+    dialog::backdrop {
+      overflow: hidden;
+      overscroll-behavior: contain;
+      background: rgba(6, 10, 20, 0.76);
+      backdrop-filter: blur(4px);
+    }
+    #welcome-dialog {
+      margin: auto;
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--text-main);
+      border: 1.5px solid rgba(250, 204, 21, 0.65);
+      border-radius: 16px;
+      padding: 20px 22px;
+      max-width: 680px;
+      width: calc(100% - 28px);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+    }
+    .welcome-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .welcome-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .welcome-title-wrap img {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      border: 1.5px solid var(--accent-gold);
+      object-fit: cover;
+    }
+    .welcome-title-wrap h2 {
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .welcome-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .welcome-mode-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .welcome-mode-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+    .welcome-mode-Radiogroup {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      background: #0b1120;
+      padding: 5px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+    }
+    .welcome-mode-Radiogroup button {
+      justify-content: flex-start;
+      padding: 8px 11px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+    .welcome-mode-Radiogroup button.active {
+      background: #1e293b;
+      color: var(--accent-gold);
+      border-color: rgba(250, 204, 21, 0.55);
+      font-weight: 700;
+    }
+
+    /* Progressive Multi-Login Callout Box */
+    .progressive-login-box {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #welcome-login-greeting {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.86rem;
+      line-height: 1.38;
+      color: #f8fafc;
+    }
+    #welcome-login-greeting.has-Read {
+      color: #fde047;
+      font-weight: 700;
+    }
+    .progressive-login-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #btn-welcome-progressive-login {
+      background: rgba(250, 204, 21, 0.16);
+      border: 1.5px solid var(--accent-gold);
+      color: #fde047;
+      font-weight: 700;
+      padding: 7px 13px;
+    }
+    #btn-welcome-progressive-login:hover {
+      background: var(--accent-gold);
       color: #0f172a;
-      border: 2px solid #ffffff;
+    }
+
+    /* 3 Seats Grid inside Welcome Dialog */
+    .welcome-seats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .welcome-seat-card {
+      background: #0f172a;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 11px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .welcome-seat-card.is-verified {
+      border-color: rgba(16, 185, 129, 0.6);
+      background: rgba(16, 185, 129, 0.06);
+    }
+    .welcome-seat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+    .welcome-seat-body {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .welcome-seat-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #64748b;
+      flex-shrink: 0;
+    }
+    .welcome-seat-select {
+      width: 100%;
+      font-size: 0.78rem;
+      padding: 5px 7px;
+    }
+    .welcome-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .welcome-footnote {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    #btn-welcome-start-game {
+      background: var(--accent-gold);
+      color: #0f172a;
+      border-color: var(--accent-gold);
+      font-size: 0.9rem;
+      font-weight: 800;
+      padding: 8px 20px;
+      border-radius: 9px;
+    }
+    #btn-welcome-start-game:hover {
+      background: #fde047;
+      transform: translateY(-1px);
     }
 
     /* Hall of Fame Overlay (revealed only at Game Over) */
@@ -370,7 +738,7 @@
       display: none !important;
     }
     .hof-card {
-      background: rgba(15, 23, 42, 0.95);
+      background: rgba(15, 23, 42, 0.96);
       border: 2px solid var(--accent-gold);
       border-radius: 14px;
       padding: 18px;
@@ -379,18 +747,22 @@
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75);
     }
     #hof-victory-banner {
-      background: linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(22, 163, 74, 0.22));
-      border: 1px solid rgba(250, 204, 21, 0.65);
+      background: linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(16, 185, 129, 0.16));
+      border: 1px solid rgba(250, 204, 21, 0.55);
       border-radius: 10px;
       padding: 12px 14px;
       margin-bottom: 12px;
       text-align: center;
     }
     #hof-victory-title {
-      font-size: 1.18rem;
-      font-weight: 900;
+      font-size: 1.12rem;
+      font-weight: 800;
       color: #fde047;
       margin-bottom: 4px;
+    }
+    #hof-victory-subtitle {
+      font-size: 0.84rem;
+      color: #f8fafc;
     }
 
     /* Pawn Promotion Picker Modal */
@@ -470,10 +842,6 @@
       font-size: 0.74rem;
       color: #94a3b8;
     }
-    #hof-victory-subtitle {
-      font-size: 0.88rem;
-      color: #f8fafc;
-    }
 
     @media (max-width: 860px) {
       #game-stage[data-view-mode="split"] {
@@ -484,120 +852,175 @@
         border-left: none;
         border-top: 1px solid var(--border-subtle);
       }
+      .welcome-seats-grid, .welcome-mode-Radiogroup {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- 1. Top Header with Brand, Turn Indicator, View Switcher, 120° Controls & PuffinLogin -->
+  <!-- 1. Top Carlessian Header with Brand, Turn Indicator, Segmented View Switcher, 120° Controls & PuffinLogin -->
   <header class="hud-topbar">
-    <div class="brand-group">
+    <a href="./" class="brand-group" title="TriBecca Home">
       <img src="docs/logo/logo.png" alt="TriBecca Logo" class="brand-logo" />
       <div>
-        <div class="brand-title">🇮🇹 TriBecca · Scacchi Tricolore 3D</div>
+        <div class="brand-title">TriBecca · Scacchi Tricolore 3D</div>
         <div class="brand-subtitle">Bianco · Rosso · Verde (96 Caselle · Rosetta Centrale · Rotazione 120°)</div>
       </div>
+    </a>
+
+    <div id="active-turn-banner" class="turn-pill">
+      <span class="army-dot army-dot--white"></span>
+      <span>Turno: <strong>Bianco</strong></span>
     </div>
 
-    <div id="active-turn-banner" class="turn-pill">⚪ Turno: <strong>Bianco</strong></div>
-
     <div class="topbar-controls">
-      <button data-view-btn="split" class="active" title="Mostra 3D e 2D affiancati">🌓 3D + 2D</button>
-      <button data-view-btn="3d" title="Solo vista 3D">🎲 Solo 3D</button>
-      <button data-view-btn="2d" title="Solo schema 2D">📐 Solo 2D</button>
+      <div class="segmented-group" role="radiogroup" aria-label="Modalità vista scacchiera">
+        <button type="button" data-view-btn="split" class="active" title="Mostra 3D e 2D affiancati">
+          <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="12" x2="12" y1="5" y2="19"/></svg>
+          <span>3D + 2D</span>
+        </button>
+        <button type="button" data-view-btn="3d" title="Solo vista 3D">
+          <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
+          <span>Solo 3D</span>
+        </button>
+        <button type="button" data-view-btn="2d" title="Solo schema 2D">
+          <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="2.5"/></svg>
+          <span>Solo 2D</span>
+        </button>
+      </div>
 
-      <button id="btn-theme-toggle" title="Cambia tra Tricolore Italiano e Legno Pirografato">🇮🇹 Tema: Tricolore</button>
+      <button type="button" id="btn-theme-toggle" title="Cambia tra Tricolore Italiano e Legno Pirografato">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+        <span id="theme-btn-label">Tema: Tricolore</span>
+      </button>
 
-      <select id="select-rotation-mode" title="Rotazione automatica di 120° a ogni turno">
-        <option value="every_turn">🔄 120°: Ogni Mossa</option>
-        <option value="humans_only">👤 120°: Solo Umani</option>
-        <option value="fixed">📌 Camera Fissa</option>
+      <select id="select-rotation-mode" aria-label="Rotazione camera 120 gradi" title="Rotazione automatica di 120° a ogni turno">
+        <option value="every_turn">120°: Ogni Mossa</option>
+        <option value="humans_only">120°: Solo Umani</option>
+        <option value="fixed">Camera Fissa</option>
       </select>
 
-      <button data-cam-angle="0" title="Inquadra Bianco (0°)">⚪ 0°</button>
-      <button data-cam-angle="120" title="Inquadra Rosso (120°)">🔴 120°</button>
-      <button data-cam-angle="240" title="Inquadra Verde/Nero (240°)">🟢 240°</button>
+      <div class="segmented-group" role="group" aria-label="Angolo camera">
+        <button type="button" data-cam-angle="0" title="Inquadra Bianco (0°)">
+          <span class="army-dot army-dot--white"></span><span>0°</span>
+        </button>
+        <button type="button" data-cam-angle="120" title="Inquadra Rosso (120°)">
+          <span class="army-dot army-dot--red"></span><span>120°</span>
+        </button>
+        <button type="button" data-cam-angle="240" title="Inquadra Verde/Nero (240°)">
+          <span class="army-dot army-dot--green"></span><span>240°</span>
+        </button>
+      </div>
 
-      <button type="button" id="btn-multilogin-table" class="multilogin-btn needs-auth" title="Autentica tutti i giocatori umani al tavolo con PIN/Password per abilitare la modalità NON-Guest">
-        🔑 Multi-Login (0/1)
+      <button type="button" id="btn-open-welcome-dialog" title="Apri la schermata di configurazione giocatori e Multi-Login">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Tavolo &amp; Login</span>
+      </button>
+
+      <button type="button" id="btn-multilogin-table" class="multilogin-btn all-verified" title="Autentica i giocatori al tavolo con PIN/Password">
+        <span id="multilogin-btn-content">Tavolo Ospite/CPU</span>
       </button>
       <puffin-login id="puffin-widget" app-id="tricolore-chess-3d" require-login="false" lang="it"></puffin-login>
     </div>
   </header>
 
-  <!-- 2. Second Bar: 3 Puffin Seats (Bianco, Rosso, Verde) + Quick Combos + Elimination Rules -->
+  <!-- 2. Second Bar: 3 Puffin Seats (Bianco, Rosso, Verde) + Segmented Quick Combos + Elimination Rules -->
   <section class="seats-bar">
     <div class="seats-group">
-      <!-- Seat White (0°) -->
+      <!-- Seat White (0° - Giocatore 1) -->
       <div id="seat-card-white" class="seat-card active-turn">
-        <span>⚪ Bianco:</span>
-        <img id="seat-avatar-white" src="assets/avatars/riccardo.png" alt="Bianco" class="seat-avatar" />
-        <select id="seat-select-white">
-          <option value="riccardo">🦖 Papino Riccardo</option>
-          <option value="ale">🐉 Ale</option>
-          <option value="seby">🐴 Seby</option>
-          <option value="kate">👸 Mamma Kate</option>
-          <option value="lucilla">👵 Nonna Lucilla</option>
-          <option value="guest">🐧 Ospite</option>
-          <option value="cpu">🤖 Computer</option>
+        <span class="army-dot army-dot--white"></span>
+        <span>G1 Bianco:</span>
+        <img id="seat-avatar-white" src="assets/avatars/guest.png" alt="Bianco" class="seat-avatar" />
+        <select id="seat-select-white" aria-label="Giocatore 1 Bianco">
+          <option value="guest">Ospite</option>
+          <option value="riccardo">Papino Riccardo</option>
+          <option value="ale">Ale</option>
+          <option value="seby">Seby</option>
+          <option value="kate">Mamma Kate</option>
+          <option value="lucilla">Nonna Lucilla</option>
+          <option value="cpu">Computer</option>
         </select>
-        <button type="button" id="seat-auth-btn-white" class="seat-auth-pill unverified" title="Clicca per fare Login con PIN/Password per questo posto">🔒 Login</button>
+        <button type="button" id="seat-auth-btn-white" class="seat-auth-pill neutral" title="Stato autenticazione posto Bianco">Ospite</button>
       </div>
 
-      <!-- Seat Red (120°) -->
+      <!-- Seat Red (120° - Giocatore 2) -->
       <div id="seat-card-red" class="seat-card">
-        <span>🔴 Rosso:</span>
+        <span class="army-dot army-dot--red"></span>
+        <span>G2 Rosso:</span>
         <img id="seat-avatar-red" src="assets/avatars/guest.png" alt="Rosso" class="seat-avatar" />
-        <select id="seat-select-red">
-          <option value="cpu">🤖 Computer</option>
-          <option value="ale">🐉 Ale</option>
-          <option value="seby">🐴 Seby</option>
-          <option value="riccardo">🦖 Papino Riccardo</option>
-          <option value="kate">👸 Mamma Kate</option>
-          <option value="lucilla">👵 Nonna Lucilla</option>
-          <option value="guest">🐧 Ospite</option>
+        <select id="seat-select-red" aria-label="Giocatore 2 Rosso">
+          <option value="cpu">Computer</option>
+          <option value="guest">Ospite</option>
+          <option value="ale">Ale</option>
+          <option value="seby">Seby</option>
+          <option value="riccardo">Papino Riccardo</option>
+          <option value="kate">Mamma Kate</option>
+          <option value="lucilla">Nonna Lucilla</option>
         </select>
-        <button type="button" id="seat-auth-btn-red" class="seat-auth-pill neutral" title="Stato autenticazione posto Rosso">🤖 Auto</button>
+        <button type="button" id="seat-auth-btn-red" class="seat-auth-pill neutral" title="Stato autenticazione posto Rosso">CPU</button>
       </div>
 
-      <!-- Seat Green (240°) -->
+      <!-- Seat Green (240° - Giocatore 3) -->
       <div id="seat-card-green" class="seat-card">
-        <span>🟢 Verde:</span>
+        <span class="army-dot army-dot--green"></span>
+        <span>G3 Verde:</span>
         <img id="seat-avatar-green" src="assets/avatars/guest.png" alt="Verde" class="seat-avatar" />
-        <select id="seat-select-green">
-          <option value="cpu">🤖 Computer</option>
-          <option value="seby">🐴 Seby</option>
-          <option value="ale">🐉 Ale</option>
-          <option value="riccardo">🦖 Papino Riccardo</option>
-          <option value="kate">👸 Mamma Kate</option>
-          <option value="lucilla">👵 Nonna Lucilla</option>
-          <option value="guest">🐧 Ospite</option>
+        <select id="seat-select-green" aria-label="Giocatore 3 Verde">
+          <option value="cpu">Computer</option>
+          <option value="guest">Ospite</option>
+          <option value="seby">Seby</option>
+          <option value="ale">Ale</option>
+          <option value="riccardo">Papino Riccardo</option>
+          <option value="kate">Mamma Kate</option>
+          <option value="lucilla">Nonna Lucilla</option>
         </select>
-        <button type="button" id="seat-auth-btn-green" class="seat-auth-pill neutral" title="Stato autenticazione posto Verde">🤖 Auto</button>
+        <button type="button" id="seat-auth-btn-green" class="seat-auth-pill neutral" title="Stato autenticazione posto Verde">CPU</button>
       </div>
     </div>
 
-    <!-- Quick Combos & Elimination Rule Preset -->
+    <!-- Segmented Quick Combos & Elimination Rule Preset -->
     <div class="seats-group">
-      <button data-preset-btn="1v2" title="1 Umano contro 2 Computer">👤 1 vs 2 🤖</button>
-      <button data-preset-btn="2v1" title="2 Umani (es. Ale + Seby) contro 1 Computer">👥 2 vs 1 🤖</button>
-      <button data-preset-btn="3v0" title="3 Umani al Tavolo (Papino, Ale, Seby)">👨‍👦‍👦 3 Umani</button>
-      <button data-preset-btn="0v3" title="3 Computer: il gioco gioca da solo!">🍿 Gioca da Solo (3 🤖)</button>
+      <div class="segmented-group" role="radiogroup" aria-label="Preset giocatori al tavolo">
+        <button type="button" data-preset-btn="1v2" class="active" title="1 Giocatore (Ospite o Loggato) contro 2 Computer">
+          <svg class="ui-svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>1 vs 2 CPU</span>
+        </button>
+        <button type="button" data-preset-btn="2v1" title="2 Umani contro 1 Computer">
+          <svg class="ui-svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>2 vs 1 CPU</span>
+        </button>
+        <button type="button" data-preset-btn="3v0" title="3 Umani al Tavolo">
+          <svg class="ui-svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>3 Umani</span>
+        </button>
+        <button type="button" data-preset-btn="0v3" title="3 Computer: il gioco gioca da solo!">
+          <svg class="ui-svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+          <span>Auto (3 CPU)</span>
+        </button>
+      </div>
 
-      <button id="btn-autoplay-toggle" title="Metti in pausa o avvia il Computer">⏸️ Pausa CPU</button>
-      <button id="btn-step-ai" title="Fai fare 1 singola mossa al Computer">⏭️ 1 Mossa CPU</button>
+      <button type="button" id="btn-autoplay-toggle" title="Metti in pausa o avvia il Computer">
+        <span id="autoplay-btn-content">Pausa CPU</span>
+      </button>
+      <button type="button" id="btn-step-ai" title="Fai fare 1 singola mossa al Computer">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+        <span>1 Mossa CPU</span>
+      </button>
 
-      <select id="select-ai-speed" title="Velocità mosse Computer">
-        <option value="1500">🐢 CPU Lenta (1.5s)</option>
-        <option value="950" selected>🚶 CPU Normale (1s)</option>
-        <option value="450">⚡ CPU Veloce (0.45s)</option>
-        <option value="160">🚀 CPU Turbo (0.16s)</option>
+      <select id="select-ai-speed" aria-label="Velocità mosse Computer" title="Velocità mosse Computer">
+        <option value="1500">CPU Lenta (1.5s)</option>
+        <option value="950" selected>CPU Normale (1.0s)</option>
+        <option value="450">CPU Veloce (0.45s)</option>
+        <option value="160">CPU Turbo (0.16s)</option>
       </select>
 
-      <select id="select-elimination-mode" title="Cosa succede quando un Re subisce Scacco Matto (dal Google Doc di Riccardo)">
-        <option value="destroy" selected>💥 Regola Matto: Distruzione (Default)</option>
-        <option value="protoss_conquer">🔮 Regola Matto: Assimilazione (Protoss Conquer)</option>
-        <option value="flotsam_obstacles">🪵 Regola Matto: Relitti Inerti (Flotsam)</option>
-        <option value="sudden_death">⚡ Regola Matto: Morte Improvvisa (1° Matto Vince)</option>
+      <select id="select-elimination-mode" aria-label="Regola eliminazione Scacco Matto" title="Cosa succede quando un Re subisce Scacco Matto (dal Google Doc di Riccardo)">
+        <option value="destroy" selected>Regola Matto: Distruzione (Default)</option>
+        <option value="protoss_conquer">Regola Matto: Assimilazione (Protoss)</option>
+        <option value="flotsam_obstacles">Regola Matto: Relitti Inerti (Flotsam)</option>
+        <option value="sudden_death">Regola Matto: Morte Improvvisa (1° Matto)</option>
       </select>
     </div>
   </section>
@@ -605,72 +1028,259 @@
   <!-- 3. Dual 3D + 2D Interactive Stage -->
   <main id="game-stage" data-view-mode="split">
     <div id="board-3d-panel" class="board-panel">
-      <div class="panel-tag">🎲 Vista 3D (Ruota di 120° a ogni mossa · Trascina per orbitare)</div>
+      <div class="panel-tag">
+        <svg class="ui-svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" x2="12" y1="22" y2="12"/></svg>
+        <span>Vista 3D (Ruota di 120° · Trascina per orbitare)</span>
+      </div>
       <div id="stage-turn-hero-card">
-        <img id="stage-turn-avatar" src="assets/avatars/riccardo.png" alt="Avatar Turno" />
+        <img id="stage-turn-avatar" src="assets/avatars/guest.png" alt="Avatar Turno" />
         <div>
-          <div id="stage-turn-title" style="font-size:0.84rem;font-weight:800;color:#fde047;">Tocca a: Papino 🦖</div>
-          <div id="stage-turn-sub" style="font-size:0.72rem;color:#cbd5e1;">⚪ Armata Bianca</div>
+          <div id="stage-turn-title" style="font-size:0.84rem;font-weight:800;color:#fde047;">Tocca a: Ospite</div>
+          <div id="stage-turn-sub" style="font-size:0.72rem;color:#cbd5e1;">Armata Bianca</div>
         </div>
       </div>
       <div id="board-3d-container"></div>
     </div>
     <div id="board-2d-panel" class="board-panel">
-      <div class="panel-tag">📐 Schema Geometrico 2D (96 Caselle A..L × 1..12 · Raggi della Rosetta)</div>
+      <div class="panel-tag">
+        <svg class="ui-svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="2.5"/></svg>
+        <span>Schema Geometrico 2D (96 Caselle A..L × 1..12 · Raggi Rosetta)</span>
+      </div>
       <div id="board-2d-container"></div>
     </div>
   </main>
 
   <!-- 4. Bottom Ray Inspector & Action Dock -->
-  <footer class="hud-bottombar">
+  <section class="hud-bottombar" aria-label="Ispettore raggi e comandi partita">
     <div id="ray-inspector-banner">
-      👆 <strong>Clicca su qualsiasi pezzo</strong> (anche avversario!) per illuminare tutti i raggi e le mosse che si dipartono attraverso la Rosetta centrale.
+      <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/></svg>
+      <span><strong>Clicca su qualsiasi pezzo</strong> (anche avversario) per illuminare tutti i raggi e le biforcazioni attraverso la Rosetta centrale.</span>
     </div>
     <div class="dock-actions">
-      <span id="move-history-pill" style="font-size:0.78rem;color:#94a3b8;margin-right:6px;">Pronti a muovere</span>
-      <button id="btn-undo" title="Annulla ultima mossa">⏮️ Undo</button>
-      <button id="btn-redo" title="Ripeti mossa">⏭️ Redo</button>
-      <button id="btn-hint" title="Illumina il pezzo e la mossa consigliata">💡 Consiglio</button>
-      <button id="btn-editor-mode" title="Muovi liberamente i pezzi per copiare la scacchiera vera sul tavolo">🛠️ Specchio Scacchiera Vera</button>
-      <button id="btn-new-game" title="Ricomincia la partita da capo">🔄 Nuova Partita</button>
+      <span id="move-history-pill" class="num-chip num-chip--info" style="margin-right:4px;">Pronti</span>
+      <button type="button" id="btn-undo" title="Annulla ultima mossa">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+        <span>Undo</span>
+      </button>
+      <button type="button" id="btn-redo" title="Ripeti mossa">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"/></svg>
+        <span>Redo</span>
+      </button>
+      <button type="button" id="btn-hint" title="Illumina il pezzo e la mossa consigliata">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        <span>Consiglio</span>
+      </button>
+      <button type="button" id="btn-editor-mode" title="Muovi liberamente i pezzi per copiare la scacchiera vera sul tavolo">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span id="editor-btn-label">Specchio Scacchiera</span>
+      </button>
+      <button type="button" id="btn-new-game" title="Ricomincia la partita da capo">
+        <svg class="ui-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span>Nuova Partita</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 5. Canonical Carlessian Footer (webapp-that-riccardo-likes Section 11) -->
+  <footer class="carlessian-footer">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <strong>TriBecca</strong>
+      <a href="CHANGELOG.md" data-version="0.2.0">v0.2.0</a>
+      <span id="footer-env-badge" class="env-badge" data-env="development">ENV: development</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/palladius/tribecca" target="_blank" rel="noopener">
+        <svg class="ui-svg-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span>GH Repo</span>
+      </a>
+      <a href="https://palladius.github.io/tribecca/" target="_blank" rel="noopener">
+        <svg class="ui-svg-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <span>GHP Live</span>
+      </a>
+      <a href="https://github.com/palladius/tribecca/issues" target="_blank" rel="noopener">GHI Issues</a>
+      <a id="add-bug-link" href="https://github.com/palladius/tribecca/issues/new" target="_blank" rel="noopener">
+        <svg class="ui-svg-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/></svg>
+        <span>Add a Bug</span>
+      </a>
     </div>
   </footer>
 
   <!-- Tactical Check / Checkmate Floating Banner -->
   <div id="tactical-toast" class="toast-check" hidden></div>
 
-  <!-- 5. Hall of Fame Modal (Hidden during gameplay, revealed ONLY at Game Over!) -->
+  <!-- 6. Start-of-Game Welcome & Progressive Multi-Login Setup Dialog (modern-web-guidance: native <dialog>) -->
+  <dialog id="welcome-dialog" aria-labelledby="welcome-dialog-title">
+    <div class="welcome-header">
+      <div class="welcome-title-wrap">
+        <img src="docs/logo/logo.png" alt="TriBecca" />
+        <div>
+          <h2 id="welcome-dialog-title">Nuova Partita</h2>
+          <p class="welcome-subtitle">Gioca subito come Ospite contro 2 Computer, oppure fai Login Famiglia per assegnare i 3 lati in sequenza</p>
+        </div>
+      </div>
+      <button type="button" id="btn-welcome-close" aria-label="Chiudi finestra configurazione">
+        <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Mode Selector (Segmented Radio Group) -->
+    <div class="welcome-mode-bar">
+      <span class="welcome-mode-label">Modalità Tavolo</span>
+      <div class="welcome-mode-Radiogroup" role="radiogroup" aria-label="Modalità di gioco iniziale">
+        <button type="button" data-welcome-mode="guest_1v2" class="active">
+          <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div>
+            <div>1 Giocatore vs 2 Computer</div>
+            <div style="font-size:0.7rem;color:#94a3b8;font-weight:500;">Default (Ospite o Loggato vs 2 CPU)</div>
+          </div>
+        </button>
+        <button type="button" data-welcome-mode="guest_2v1">
+          <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <div>
+            <div>2 Giocatori vs 1 Computer</div>
+            <div style="font-size:0.7rem;color:#94a3b8;font-weight:500;">Ospite vs Ospite (o 2 Loggati) vs CPU</div>
+          </div>
+        </button>
+        <button type="button" data-welcome-mode="guest_3v0">
+          <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <div>
+            <div>3 Giocatori al Tavolo</div>
+            <div style="font-size:0.7rem;color:#94a3b8;font-weight:500;">3 Ospiti oppure Papino, Ale e Seby</div>
+          </div>
+        </button>
+        <button type="button" data-welcome-mode="0v3">
+          <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+          <div>
+            <div>Auto-Play (3 Computer)</div>
+            <div style="font-size:0.7rem;color:#94a3b8;font-weight:500;">La scacchiera gioca da sola</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progressive Family Multi-Login Callout ("Ah sei Riccardo? Bene, allora ti do Giocatore 1!") -->
+    <div id="welcome-progressive-box" class="progressive-login-box">
+      <div id="welcome-login-greeting">
+        <svg class="ui-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+        <span id="welcome-login-greeting-text">
+          Siete in famiglia? Man mano che fate <strong>Login Puffin</strong> vi assegno in ordine <strong>Giocatore 1 (Bianco)</strong>, <strong>Giocatore 2 (Rosso)</strong> e <strong>Giocatore 3 (Verde)</strong>!
+        </span>
+      </div>
+      <div class="progressive-login-actions">
+        <button type="button" id="btn-welcome-progressive-login">
+          <svg class="ui-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+          <span id="welcome-progressive-btn-label">Fai Login Famiglia (Assegna Giocatore 1 · Bianco)</span>
+        </button>
+        <button type="button" id="btn-welcome-reset-guest" title="Torna a Ospite contro 2 Computer senza login">
+          Resetta a Ospite vs 2 CPU
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Seats Overview inside Welcome Dialog -->
+    <div class="welcome-seats-grid">
+      <!-- Giocatore 1: Bianco -->
+      <div id="welcome-seat-card-white" class="welcome-seat-card">
+        <div class="welcome-seat-header">
+          <span><span class="army-dot army-dot--white"></span> Giocatore 1 · Bianco</span>
+          <span id="welcome-seat-badge-white" class="num-chip num-chip--info">Ospite</span>
+        </div>
+        <div class="welcome-seat-body">
+          <img id="welcome-seat-avatar-white" src="assets/avatars/guest.png" alt="Giocatore 1" class="welcome-seat-avatar" />
+          <select id="welcome-seat-select-white" class="welcome-seat-select" aria-label="Scegli Giocatore 1 Bianco">
+            <option value="guest">Ospite</option>
+            <option value="riccardo">Papino Riccardo</option>
+            <option value="ale">Ale</option>
+            <option value="seby">Seby</option>
+            <option value="kate">Mamma Kate</option>
+            <option value="lucilla">Nonna Lucilla</option>
+            <option value="cpu">Computer</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Giocatore 2: Rosso -->
+      <div id="welcome-seat-card-red" class="welcome-seat-card">
+        <div class="welcome-seat-header">
+          <span><span class="army-dot army-dot--red"></span> Giocatore 2 · Rosso</span>
+          <span id="welcome-seat-badge-red" class="num-chip num-chip--info">CPU</span>
+        </div>
+        <div class="welcome-seat-body">
+          <img id="welcome-seat-avatar-red" src="assets/avatars/guest.png" alt="Giocatore 2" class="welcome-seat-avatar" />
+          <select id="welcome-seat-select-red" class="welcome-seat-select" aria-label="Scegli Giocatore 2 Rosso">
+            <option value="cpu">Computer</option>
+            <option value="guest">Ospite</option>
+            <option value="ale">Ale</option>
+            <option value="seby">Seby</option>
+            <option value="riccardo">Papino Riccardo</option>
+            <option value="kate">Mamma Kate</option>
+            <option value="lucilla">Nonna Lucilla</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Giocatore 3: Verde -->
+      <div id="welcome-seat-card-green" class="welcome-seat-card">
+        <div class="welcome-seat-header">
+          <span><span class="army-dot army-dot--green"></span> Giocatore 3 · Verde</span>
+          <span id="welcome-seat-badge-green" class="num-chip num-chip--info">CPU</span>
+        </div>
+        <div class="welcome-seat-body">
+          <img id="welcome-seat-avatar-green" src="assets/avatars/guest.png" alt="Giocatore 3" class="welcome-seat-avatar" />
+          <select id="welcome-seat-select-green" class="welcome-seat-select" aria-label="Scegli Giocatore 3 Verde">
+            <option value="cpu">Computer</option>
+            <option value="guest">Ospite</option>
+            <option value="seby">Seby</option>
+            <option value="ale">Ale</option>
+            <option value="riccardo">Papino Riccardo</option>
+            <option value="kate">Mamma Kate</option>
+            <option value="lucilla">Nonna Lucilla</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="welcome-footer">
+      <p class="welcome-footnote">Nessun login richiesto per giocare come Ospite. I giocatori loggati salvano il punteggio col proprio nome nella Hall of Fame.</p>
+      <button type="button" id="btn-welcome-start-game" autofocus>
+        <svg class="ui-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        <span>Inizia Partita</span>
+      </button>
+    </div>
+  </dialog>
+
+  <!-- 7. Hall of Fame Modal (Hidden during gameplay, revealed ONLY at Game Over!) -->
   <section id="hof-section" hidden>
     <div class="hof-card">
       <div id="hof-victory-banner">
-        <div id="hof-victory-title">👑 SCACCO MATTO!</div>
+        <div id="hof-victory-title">SCACCO MATTO!</div>
         <div id="hof-victory-subtitle">Partita conclusa</div>
         <button type="button" id="btn-claim-winner-login" hidden style="margin-top:10px;width:100%;justify-content:center;background:#facc15;color:#0f172a;font-weight:900;border:2px solid #ffffff;">
-          🔐 Fai Login ora per salvare questa vittoria a tuo nome (non Guest)!
+          Fai Login ora per salvare questa vittoria a tuo nome (non Guest)
         </button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h2>🏆 Hall of Fame — TriBecca</h2>
+        <h2>Hall of Fame</h2>
         <div style="display:flex;gap:8px;">
-          <button onclick="document.getElementById('btn-new-game').click()">🔄 Nuova Partita</button>
-          <button onclick="document.getElementById('hof-section').hidden = true">✖️ Chiudi</button>
+          <button type="button" onclick="document.getElementById('btn-new-game').click()">Nuova Partita</button>
+          <button type="button" onclick="document.getElementById('hof-section').hidden = true">Chiudi</button>
         </div>
       </div>
       <puffin-leaderboard id="game-lb" filter-game="tricolore-chess-3d"></puffin-leaderboard>
     </div>
   </section>
 
-  <!-- 6. Pawn Promotion Choice Modal -->
+  <!-- 8. Pawn Promotion Choice Modal -->
   <section id="promotion-section" hidden>
     <div class="promo-card">
       <div class="promo-header">
-        <img id="promo-player-avatar" src="assets/avatars/riccardo.png" alt="Giocatore" />
+        <img id="promo-player-avatar" src="assets/avatars/guest.png" alt="Giocatore" />
         <div style="text-align:left;">
-          <div id="promo-title" style="font-size:1.12rem;font-weight:900;color:#fde047;">
-            👑 Promozione del Pedone!
-          </div>
+          <h2 id="promo-title" style="font-size:1.12rem;font-weight:900;color:#fde047;">
+            Promozione del Pedone
+          </h2>
           <div id="promo-subtitle" style="font-size:0.84rem;color:#cbd5e1;">
-            Il tuo pedone è arrivato in fondo! Scegli in quale pezzo trasformarlo:
+            Il tuo pedone è arrivato in fondo. Scegli in quale pezzo trasformarlo:
           </div>
         </div>
       </div>
@@ -678,7 +1288,7 @@
         <button type="button" class="promo-choice-btn" data-promo-type="q">
           <span class="promo-choice-icon">♕</span>
           <span class="promo-choice-name">Regina</span>
-          <span class="promo-choice-desc">Torre + Alfiere (La più forte!)</span>
+          <span class="promo-choice-desc">Torre + Alfiere (La più forte)</span>
         </button>
         <button type="button" class="promo-choice-btn" data-promo-type="r">
           <span class="promo-choice-icon">♖</span>
@@ -697,7 +1307,7 @@
         </button>
       </div>
       <button type="button" id="btn-promo-cancel" style="width:100%;justify-content:center;">
-        ✖️ Annulla mossa
+        Annulla mossa
       </button>
     </div>
   </section>

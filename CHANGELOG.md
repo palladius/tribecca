@@ -2,6 +2,20 @@
 
 All notable changes to **TriBecca (`Scacchi Tricolore 3D`)** are documented here.
 
+## [0.2.0] - 2026-11-08
+
+### ✨ Added
+- **Start-of-Game Setup & Progressive Multi-Login Dialog (`index.html`, `src/main.js`, `src/managers/PlayerSeatManager.js`)**:
+  - Built a native HTML `<dialog id="welcome-dialog">` (following `modern-web-guidance` Top-Layer & scroll-containment best practices) that opens at the start of a match.
+  - Defaults to **`Ospite vs 2 Computer`** (`Giocatore 1 · Bianco = Ospite`, `Giocatore 2 · Rosso = CPU`, `Giocatore 3 · Verde = CPU`) for 99% of casual visitors, with 1-click segmented radio presets for **`2 Giocatori vs 1 Computer`**, **`3 Giocatori al Tavolo (Ospiti / Famiglia)`**, and **`Auto-Play (3 Computer)`**.
+  - Added **Progressive Family Multi-Login (`assignNextProgressiveLogin()`)**: as family members log in sequentially via `<puffin-login>`, the game greets each player and assigns them to the next open seat in order:
+    - 1st login: *"Ah sei Papino Riccardo? Bene, allora ti do Giocatore 1 (Bianco)!"*
+    - 2nd login: *"Ah sei Ale? Bene, allora ti do Giocatore 2 (Rosso)!"*
+    - 3rd login: *"Ah sei Seby? Bene, allora ti do Giocatore 3 (Verde)!"*
+- **Monochrome `currentColor` SVG Icon System & Carlessian UI Polish (`src/ui/icons.js`, `index.html`, `src/views/Board2DView.js`)**:
+  - Replaced polychrome OS emojis across all toolbars, `<select>` options, 2D board medallions, and toasts with crisp Lucide-style `stroke="currentColor"` inline SVGs (`split`, `cube`, `hexagon`, `palette`, `user`, `users`, `bot`, `play`, `pause`, `stepForward`, `undo`, `redo`, `lightbulb`, `wrench`, `refresh`, `key`, `lock`, `check`, `shieldCheck`, `shieldAlert`, `trophy`, `crown`, `crosshair`, `bug`, `code`, `globe`) and geometric `.army-dot` indicators (`webapp-that-riccardo-likes` Section 2 & `modern-web-guidance` `icons`).
+  - Added joined segmented radio controls (`role="radiogroup"`), `tabular-nums`, soft-tinted numeric micro-badges (`.num-chip--info`, `.num-chip--ok`, `.num-chip--warn`, `.num-chip--bad`), URL query string + `localStorage` state persistence across `F5` reload (`?view=split&theme=tricolore&mode=1v2&autostart=1`), and the canonical **Carlessian Footer** (`v0.2.0`, `ENV` badge, `GH Repo`, `GHP Live`, `GHI Issues`, `Add a Bug`).
+
 ## [0.1.6] - 2026-11-07
 
 ### ✨ Added

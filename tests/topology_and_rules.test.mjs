@@ -238,6 +238,11 @@ test('PlayerSeatManager Multi-Login tracks N verified family players and resolve
   const rules = new ThreeChessRulesManager(topo);
   const seats = new PlayerSeatManager(rules);
 
+  // Default for 99% of casual players is Guest (White) vs 2 Computers (Red, Green)
+  assert.equal(seats.getSeat('white').profileId, 'guest');
+  assert.equal(seats.getSeat('red').profileId, 'cpu');
+  assert.equal(seats.getSeat('green').profileId, 'cpu');
+
   seats.applyPreset('3v0'); // White=riccardo, Red=ale, Green=seby
   seats.clearVerifiedProfiles();
 
@@ -254,4 +259,27 @@ test('PlayerSeatManager Multi-Login tracks N verified family players and resolve
   assert.equal(seats.getUnverifiedHumanSeats().length, 0);
   assert.equal(seats.getEffectiveLeaderboardUserId('red'), 'ale');
   assert.equal(seats.getEffectiveLeaderboardUserId('green'), 'seby');
+});
+
+test('PlayerSeatManager Progressive Login assigns Giocatore 1 -> 2 -> 3 sequentially with Italian greetings', () => {
+  const topo = new BoardTopologyManager();
+  const rules = new ThreeChessRulesManager(topo);
+  const seats = new PlayerSeatManager(rules);
+  seats.clearVerifiedProfiles();
+
+  const g1 = seats.assignNextProgressiveLogin('riccardo');
+  assert.equal(g1.color, 'white');
+  assert.equal(g1.playerNumber, 1);
+  assert.match(g1.greetingIt, /Ah sei Papino Riccardo\? Bene, allora ti do Giocatore 1 \(Bianco\)!/);
+
+  const g2 = seats.assignNextProgressiveLogin('ale');
+  assert.equal(g2.color, 'red');
+  assert.equal(g2.playerNumber, 2);
+  assert.match(g2.greetingIt, /Ah sei Ale\? Bene, allora ti do Giocatore 2 \(Rosso\)!/);
+
+  const g3 = seats.assignNextProgressiveLogin('seby');
+  assert.equal(g3.color, 'green');
+  assert.equal(g3.playerNumber, 3);
+  assert.match(g3.greetingIt, /Ah sei Seby\? Bene, allora ti do Giocatore 3 \(Verde\)!/);
+  assert.equal(seats.getNextOpenProgressiveColor(), null);
 });
